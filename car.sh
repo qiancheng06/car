@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -Eeo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -15,6 +15,7 @@ if [[ ! -f install/setup.bash ]]; then
   exit 1
 fi
 source install/setup.bash
+set -u
 
 HARDWARE_LOCK="${XDG_RUNTIME_DIR:-/tmp}/racecar_hardware_start.lock"
 exec 8>"$HARDWARE_LOCK"
@@ -49,7 +50,7 @@ echo "The PWM-style /teleop_cmd_vel input is enabled for low-speed mapping/bench
 ros2 launch racecar Run_car.launch.py \
   enable_legacy_pwm_input:=true \
   enable_legacy_normalized_input:=false \
-  "$@" &
+  "$@" 8>&- &
 PIDS+=("$!")
 
 for _ in {1..20}; do

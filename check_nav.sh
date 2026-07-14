@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -Eeo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -8,6 +8,7 @@ source /opt/ros/humble/setup.bash
 if [[ -f install/setup.bash ]]; then
   source install/setup.bash
 fi
+set -u
 
 python3 -m py_compile \
   src/racecar/scripts/nav_cmd_adapter.py \

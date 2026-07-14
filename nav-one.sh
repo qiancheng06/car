@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -Eeo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -32,6 +32,7 @@ if [[ ! -f install/setup.bash ]]; then
   exit 1
 fi
 source install/setup.bash
+set -u
 
 if ! ros2 pkg prefix teb_local_planner >/dev/null 2>&1; then
   echo "ERROR: TEB is missing. Run: bash setup_teb.sh" >&2
@@ -82,7 +83,7 @@ if ! ros2 node list 2>/dev/null | grep -qx '/racecar_driver'; then
   echo "Starting hardware with all legacy command inputs disabled..."
   ros2 launch racecar Run_car.launch.py \
     enable_legacy_pwm_input:=false \
-    enable_legacy_normalized_input:=false &
+    enable_legacy_normalized_input:=false 8>&- 9>&- &
   PIDS+=("$!")
   for _ in {1..20}; do
     ros2 node list 2>/dev/null | grep -qx '/racecar_driver' && break
@@ -113,10 +114,10 @@ flock -u 8
 
 echo "Starting Hybrid-A*, TEB and the DISARMED command adapter..."
 if [[ "$HAS_MAP_ARGUMENT" == true ]]; then
-  ros2 launch racecar Run_nav.launch.py "$@" &
+  ros2 launch racecar Run_nav.launch.py "$@" 8>&- 9>&- &
 else
   ros2 launch racecar Run_nav.launch.py "$@" \
-    "map:=$DEFAULT_MAP" &
+    "map:=$DEFAULT_MAP" 8>&- 9>&- &
 fi
 PIDS+=("$!")
 

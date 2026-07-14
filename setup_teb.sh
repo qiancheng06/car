@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -Eeo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -16,6 +16,7 @@ if [[ ! -f /opt/ros/humble/setup.bash ]]; then
   exit 1
 fi
 source /opt/ros/humble/setup.bash
+set -u
 
 for required_command in git rosdep colcon; do
   if ! command -v "$required_command" >/dev/null 2>&1; then

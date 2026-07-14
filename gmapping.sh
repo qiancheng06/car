@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -Eeuo pipefail
+set -Eeo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -21,8 +21,10 @@ if [[ ! -f install/setup.bash ]]; then
   exit 1
 fi
 source install/setup.bash
+set -u
 
 PIDS=()
+CORE_PIDS=()
 
 cleanup() {
   timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
@@ -55,8 +57,9 @@ if ! ros2 node list 2>/dev/null | grep -qx '/racecar_driver'; then
   echo "Starting hardware for mapping (driver remains DISARMED)..."
   ros2 launch racecar Run_car.launch.py \
     enable_legacy_pwm_input:=true \
-    enable_legacy_normalized_input:=false &
+    enable_legacy_normalized_input:=false 8>&- 9>&- &
   PIDS+=("$!")
+  CORE_PIDS+=("$!")
   for _ in {1..20}; do
     ros2 node list 2>/dev/null | grep -qx '/racecar_driver' && break
     sleep 0.5
@@ -86,8 +89,21 @@ fi
 flock -u 8
 
 echo "Starting gmapping..."
-ros2 launch slam_gmapping slam_gmapping.launch.py use_sim_time:=false &
+ros2 launch slam_gmapping slam_gmapping.launch.py use_sim_time:=false 8>&- 9>&- &
 PIDS+=("$!")
+CORE_PIDS+=("$!")
+
+RVIZ_CONFIG="$SCRIPT_DIR/src/racecar/rviz/slam.rviz"
+if [[ "${START_RVIZ:-true}" == "true" ]]; then
+  if [[ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]]; then
+    echo "Starting RViz for mapping..."
+    rviz2 -d "$RVIZ_CONFIG" 8>&- 9>&- &
+    PIDS+=("$!")
+  else
+    echo "RViz was not started because this terminal has no graphical display."
+    echo "Open a desktop terminal and run: rviz2 -d $RVIZ_CONFIG"
+  fi
+fi
 
 echo "Mapping is running. In another terminal use: bash save.sh"
 echo "The chassis is DISARMED. For a lifted-wheel/manual test, arm with:"
@@ -97,4 +113,4 @@ echo "  ros2 run racecar racecar_teleop.py"
 echo "Software stop:"
 echo "  ros2 topic pub --once /nav/estop std_msgs/msg/Bool '{data: true}'"
 
-wait -n "${PIDS[@]}"
+wait -n "${CORE_PIDS[@]}"
