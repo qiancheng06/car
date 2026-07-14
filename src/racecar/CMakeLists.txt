@@ -112,6 +112,7 @@ install(PROGRAMS
 install(PROGRAMS
   scripts/cv_follow_node.py
   scripts/odom_key_debug.py
+  scripts/nav_cmd_adapter.py
   DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY
@@ -123,7 +124,15 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 install(DIRECTORY
+  map
+  DESTINATION share/${PROJECT_NAME}
+)
+install(DIRECTORY
   launch
+  DESTINATION share/${PROJECT_NAME}
+)
+install(DIRECTORY
+  behavior_trees
   DESTINATION share/${PROJECT_NAME}
 )
 

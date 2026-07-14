@@ -1,0 +1,9 @@
+repositories:
+  costmap_converter_ros2:
+    type: git
+    url: https://github.com/doisyg/costmap_converter.git
+    version: b1a7d891f71cc346f452b786e36f4637b47a02c6
+  teb_local_planner_ros2:
+    type: git
+    url: https://github.com/rst-tu-dortmund/teb_local_planner.git
+    version: 630a22e88dc9fd45be726a762edbb5b776bef231

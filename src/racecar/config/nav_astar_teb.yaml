@@ -1,0 +1,431 @@
+# Navigation configuration for the physical outdoor racecar.
+#
+# Global planner: Smac Hybrid-A* (A* with Ackermann kinematic constraints).
+# Local planner/controller: TEB from the official humble-devel branch.
+#
+# Vehicle source data:
+#   body: 0.45 x 0.16 x 0.26 m; wheel track: 0.35 m; wheel radius: 0.06 m
+#   mass: 6.5 kg; theoretical acceleration: 6.67 m/s^2
+# Existing controller measurement:
+#   wheelbase: 0.305 m; conservative minimum turning radius: 0.60 m
+#
+# The acceleration/speed values below are deliberately much lower than the
+# theoretical limits.  Increase them only after measuring braking distance.
+
+amcl:
+  ros__parameters:
+    use_sim_time: false
+    alpha1: 0.15
+    alpha2: 0.15
+    alpha3: 0.20
+    alpha4: 0.20
+    alpha5: 0.10
+    base_frame_id: base_footprint
+    beam_skip_distance: 0.5
+    beam_skip_error_threshold: 0.9
+    beam_skip_threshold: 0.3
+    do_beamskip: false
+    global_frame_id: map
+    lambda_short: 0.1
+    laser_likelihood_max_dist: 2.0
+    laser_max_range: 12.0
+    laser_min_range: 0.10
+    laser_model_type: likelihood_field
+    max_beams: 90
+    max_particles: 1500
+    min_particles: 300
+    odom_frame_id: odom_combined
+    pf_err: 0.05
+    pf_z: 0.99
+    recovery_alpha_fast: 0.0
+    recovery_alpha_slow: 0.0
+    resample_interval: 1
+    robot_model_type: nav2_amcl::DifferentialMotionModel
+    save_pose_rate: 0.5
+    sigma_hit: 0.20
+    tf_broadcast: true
+    transform_tolerance: 0.3
+    update_min_a: 0.08
+    update_min_d: 0.04
+    z_hit: 0.85
+    z_max: 0.05
+    z_rand: 0.10
+    z_short: 0.0
+    scan_topic: /scan
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+amcl_map_client:
+  ros__parameters:
+    use_sim_time: false
+
+amcl_rclcpp_node:
+  ros__parameters:
+    use_sim_time: false
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: map
+    robot_base_frame: base_footprint
+    odom_topic: /odom_combined
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    wait_for_service_timeout: 1000
+    transform_tolerance: 0.2
+    # Rewritten to installed package paths by Run_nav.launch.py.
+    default_nav_to_pose_bt_xml: ""
+    default_nav_through_poses_bt_xml: ""
+    error_code_names:
+      - compute_path_error_code
+      - follow_path_error_code
+
+bt_navigator_rclcpp_node:
+  ros__parameters:
+    use_sim_time: false
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 20.0
+    failure_tolerance: 0.3
+    odom_topic: /odom_combined
+    min_x_velocity_threshold: 0.01
+    min_y_velocity_threshold: 0.0
+    min_theta_velocity_threshold: 0.01
+    progress_checker_plugin: progress_checker
+    goal_checker_plugins: [goal_checker]
+    controller_plugins: [FollowPath]
+
+    progress_checker:
+      plugin: nav2_controller::SimpleProgressChecker
+      required_movement_radius: 0.20
+      movement_time_allowance: 5.0
+
+    goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      xy_goal_tolerance: 0.20
+      yaw_goal_tolerance: 0.35
+      stateful: true
+
+    FollowPath:
+      plugin: teb_local_planner::TebLocalPlannerROS
+      odom_topic: /odom_combined
+
+      # Trajectory
+      teb_autosize: 1.0
+      dt_ref: 0.20
+      dt_hysteresis: 0.05
+      min_samples: 3
+      max_samples: 120
+      global_plan_overwrite_orientation: false
+      allow_init_with_backwards_motion: false
+      max_global_plan_lookahead_dist: 2.5
+      global_plan_viapoint_sep: 0.25
+      global_plan_prune_distance: 0.70
+      exact_arc_length: true
+      feasibility_check_no_poses: 5
+      publish_feedback: false
+
+      # Robot kinematics.  TEB publishes yaw rate; nav_cmd_adapter converts it
+      # to a steering angle using wheelbase and current linear velocity.
+      max_vel_x: 0.45
+      max_vel_x_backwards: 0.05
+      max_vel_y: 0.0
+      max_vel_theta: 0.75
+      acc_lim_x: 0.80
+      acc_lim_y: 0.0
+      acc_lim_theta: 1.50
+      min_turning_radius: 0.60
+      wheelbase: 0.305
+      cmd_angle_instead_rotvel: false
+      is_footprint_dynamic: false
+      footprint_model:
+        type: polygon
+        # The existing lidar self-filter places the body mostly behind
+        # base_footprint (x=-0.35..0.05). Add 2.5 cm at both ends to match the
+        # documented 0.45 m body. Verify these two x offsets on the real car.
+        vertices: "[[-0.375,-0.18],[-0.375,0.18],[0.075,0.18],[0.075,-0.18]]"
+
+      # Goal tolerance
+      free_goal_vel: false
+
+      # Obstacles
+      min_obstacle_dist: 0.10
+      inflation_dist: 0.25
+      dynamic_obstacle_inflation_dist: 0.30
+      include_dynamic_obstacles: false
+      include_costmap_obstacles: true
+      costmap_obstacles_behind_robot_dist: 0.70
+      obstacle_poses_affected: 15
+      costmap_converter_plugin: ""
+      costmap_converter_spin_thread: false
+
+      # Optimization
+      no_inner_iterations: 5
+      no_outer_iterations: 4
+      optimization_activate: true
+      optimization_verbose: false
+      penalty_epsilon: 0.01
+      obstacle_cost_exponent: 4.0
+      weight_max_vel_x: 2.0
+      weight_max_vel_theta: 1.0
+      weight_acc_lim_x: 2.0
+      weight_acc_lim_theta: 2.0
+      weight_kinematics_nh: 1000.0
+      weight_kinematics_forward_drive: 1000.0
+      weight_kinematics_turning_radius: 80.0
+      weight_optimaltime: 5.0
+      weight_shortest_path: 1.0
+      weight_obstacle: 80.0
+      weight_inflation: 0.20
+      weight_dynamic_obstacle: 10.0
+      weight_dynamic_obstacle_inflation: 0.20
+      weight_viapoint: 20.0
+      weight_adapt_factor: 2.0
+
+      # One topology is more predictable between the cone boundaries.
+      enable_homotopy_class_planning: false
+      enable_multithreading: false
+      max_number_classes: 2
+      selection_cost_hysteresis: 1.0
+      selection_prefer_initial_plan: 1.0
+      selection_obst_cost_scale: 1.0
+      selection_alternative_time_cost: true
+      roadmap_graph_samples: 10
+      roadmap_graph_area_width: 2.5
+      h_signature_prescaler: 0.5
+      h_signature_threshold: 0.1
+      obstacle_heading_threshold: 0.45
+      viapoints_all_candidates: true
+      delete_detours_backwards: true
+      visualize_hc_graph: false
+
+      # Recovery internal to TEB; the output bridge rejects in-place rotation.
+      shrink_horizon_backup: true
+      shrink_horizon_min_duration: 5.0
+      oscillation_recovery: true
+      oscillation_v_eps: 0.05
+      oscillation_omega_eps: 0.05
+      oscillation_recovery_min_duration: 5.0
+      oscillation_filter_duration: 5.0
+
+controller_server_rclcpp_node:
+  ros__parameters:
+    use_sim_time: false
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 12.0
+      publish_frequency: 5.0
+      global_frame: odom_combined
+      robot_base_frame: base_footprint
+      rolling_window: true
+      width: 4.0
+      height: 4.0
+      resolution: 0.05
+      footprint: "[[-0.375,-0.18],[-0.375,0.18],[0.075,0.18],[0.075,-0.18]]"
+      plugins: [obstacle_layer, inflation_layer]
+      obstacle_layer:
+        plugin: nav2_costmap_2d::ObstacleLayer
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          data_type: LaserScan
+          clearing: true
+          marking: true
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          raytrace_min_range: 0.10
+          raytrace_max_range: 5.0
+          max_obstacle_height: 1.0
+      inflation_layer:
+        plugin: nav2_costmap_2d::InflationLayer
+        inflation_radius: 0.25
+        cost_scaling_factor: 8.0
+      always_send_full_costmap: true
+  local_costmap_client:
+    ros__parameters:
+      use_sim_time: false
+  local_costmap_rclcpp_node:
+    ros__parameters:
+      use_sim_time: false
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: false
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      resolution: 0.05
+      track_unknown_space: true
+      footprint: "[[-0.375,-0.18],[-0.375,0.18],[0.075,0.18],[0.075,-0.18]]"
+      plugins: [static_layer, obstacle_layer, inflation_layer]
+      static_layer:
+        plugin: nav2_costmap_2d::StaticLayer
+        map_subscribe_transient_local: true
+      obstacle_layer:
+        plugin: nav2_costmap_2d::ObstacleLayer
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          data_type: LaserScan
+          clearing: true
+          marking: true
+          obstacle_min_range: 0.10
+          obstacle_max_range: 3.0
+          raytrace_min_range: 0.10
+          raytrace_max_range: 5.0
+          max_obstacle_height: 1.0
+      inflation_layer:
+        plugin: nav2_costmap_2d::InflationLayer
+        inflation_radius: 0.25
+        cost_scaling_factor: 8.0
+      always_send_full_costmap: true
+  global_costmap_client:
+    ros__parameters:
+      use_sim_time: false
+  global_costmap_rclcpp_node:
+    ros__parameters:
+      use_sim_time: false
+
+map_server:
+  ros__parameters:
+    use_sim_time: false
+    yaml_filename: ""
+
+map_saver:
+  ros__parameters:
+    use_sim_time: false
+    save_map_timeout: 5.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    map_subscribe_transient_local: true
+
+planner_server:
+  ros__parameters:
+    use_sim_time: false
+    expected_planner_frequency: 5.0
+    planner_plugins: [GridBased]
+    GridBased:
+      # Hybrid-A* is the A* variant intended for Ackermann/carlike vehicles.
+      plugin: nav2_smac_planner/SmacPlannerHybrid
+      tolerance: 0.20
+      downsample_costmap: false
+      downsampling_factor: 1
+      allow_unknown: true
+      max_iterations: 250000
+      max_on_approach_iterations: 1000
+      max_planning_time: 2.0
+      motion_model_for_search: DUBIN
+      angle_quantization_bins: 64
+      analytic_expansion_ratio: 3.5
+      minimum_turning_radius: 0.60
+      reverse_penalty: 5.0
+      change_penalty: 0.0
+      non_straight_penalty: 1.20
+      cost_penalty: 2.0
+      retrospective_penalty: 0.015
+      lookup_table_size: 10.0
+      cache_obstacle_heuristic: true
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.30
+        w_data: 0.20
+        tolerance: 1.0e-10
+        do_refinement: true
+
+planner_server_rclcpp_node:
+  ros__parameters:
+    use_sim_time: false
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: false
+    smoother_plugins: [simple_smoother]
+    simple_smoother:
+      plugin: nav2_smoother::SimpleSmoother
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: true
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    cycle_frequency: 10.0
+    # Ackermann cars cannot spin in place; reverse is blocked during initial tests.
+    behavior_plugins: [wait]
+    wait:
+      plugin: nav2_behaviors/Wait
+    global_frame: odom_combined
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.2
+    simulate_ahead_time: 1.0
+    max_rotational_vel: 0.50
+    min_rotational_vel: 0.10
+    rotational_acc_lim: 1.0
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: false
+    loop_rate: 20
+    stop_on_failure: true
+    waypoint_task_executor_plugin: wait_at_waypoint
+    wait_at_waypoint:
+      plugin: nav2_waypoint_follower::WaitAtWaypoint
+      enabled: true
+      waypoint_pause_duration: 50
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: false
+    smoothing_frequency: 20.0
+    scale_velocities: false
+    feedback: OPEN_LOOP
+    max_velocity: [0.45, 0.0, 0.75]
+    min_velocity: [0.0, 0.0, -0.75]
+    max_accel: [0.80, 0.0, 1.50]
+    max_decel: [-1.00, 0.0, -1.80]
+    odom_topic: /odom_combined
+    odom_duration: 0.1
+    deadband_velocity: [0.01, 0.0, 0.01]
+    velocity_timeout: 0.5
+
+nav_cmd_adapter:
+  ros__parameters:
+    input_topic: /cmd_vel
+    output_topic: /racecar_driver/cmd_pwm
+    arm_topic: /nav/arm
+    estop_topic: /nav/estop
+    state_topic: /nav/adapter_state
+    publish_rate_hz: 30.0
+    cmd_timeout_s: 0.40
+    angular_input_mode: yaw_rate
+    wheelbase_m: 0.305
+    min_turning_radius_m: 0.60
+    max_steering_angle_rad: 0.50
+    max_linear_speed_mps: 0.45
+    max_reverse_speed_mps: 0.0
+    min_motion_speed_mps: 0.02
+    allow_reverse: false
+    neutral_throttle_pwm: 1500.0
+    min_throttle_pwm: 1500.0
+    max_throttle_pwm: 1550.0
+    pwm_per_mps: 100.0
+    steering_center_deg: 90.0
+    steering_min_deg: 55.0
+    steering_max_deg: 125.0
+    steering_direction: 1.0
+    steering_gain: 1.0

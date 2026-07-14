@@ -11,6 +11,17 @@ if ! flock -n 9; then
   exit 1
 fi
 
+HAS_MAP_ARGUMENT=false
+for argument in "$@"; do
+  if [[ "$argument" == auto_arm:=* ]]; then
+    echo "ERROR: nav-one.sh always starts disarmed; remove '$argument'." >&2
+    exit 1
+  fi
+  if [[ "$argument" == map:=* ]]; then
+    HAS_MAP_ARGUMENT=true
+  fi
+done
+
 if [[ ! -f /opt/ros/humble/setup.bash ]]; then
   echo "ERROR: /opt/ros/humble/setup.bash does not exist." >&2
   exit 1
@@ -21,6 +32,22 @@ if [[ ! -f install/setup.bash ]]; then
   exit 1
 fi
 source install/setup.bash
+
+if ! ros2 pkg prefix teb_local_planner >/dev/null 2>&1; then
+  echo "ERROR: TEB is missing. Run: bash setup_teb.sh" >&2
+  exit 1
+fi
+if ! ros2 pkg prefix costmap_converter >/dev/null 2>&1; then
+  echo "ERROR: costmap_converter is missing. Run: bash setup_teb.sh" >&2
+  exit 1
+fi
+
+DEFAULT_MAP="$SCRIPT_DIR/src/racecar/map/ai_map.yaml"
+if [[ "$HAS_MAP_ARGUMENT" == false && ! -s "$DEFAULT_MAP" ]]; then
+  echo "ERROR: default map does not exist: $DEFAULT_MAP" >&2
+  echo "Run gmapping.sh + save.sh, or pass map:=/absolute/path/map.yaml" >&2
+  exit 1
+fi
 
 PIDS=()
 
@@ -39,8 +66,8 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-if ros2 node list 2>/dev/null | grep -qx '/slam_gmapping'; then
-  echo "ERROR: slam_gmapping is already running." >&2
+if ros2 node list 2>/dev/null | grep -Eq '^/(bt_navigator|nav_cmd_adapter)$'; then
+  echo "ERROR: Nav2 is already running." >&2
   exit 1
 fi
 
@@ -52,9 +79,9 @@ if ! flock -w 15 8; then
 fi
 
 if ! ros2 node list 2>/dev/null | grep -qx '/racecar_driver'; then
-  echo "Starting hardware for mapping (driver remains DISARMED)..."
+  echo "Starting hardware with all legacy command inputs disabled..."
   ros2 launch racecar Run_car.launch.py \
-    enable_legacy_pwm_input:=true \
+    enable_legacy_pwm_input:=false \
     enable_legacy_normalized_input:=false &
   PIDS+=("$!")
   for _ in {1..20}; do
@@ -74,27 +101,28 @@ else
     echo "ERROR: cannot read the running driver's safety mode." >&2
     exit 1
   fi
-  if grep -qi true <<<"$legacy_all_mode" || \
-    ! grep -qi true <<<"$legacy_pwm_mode" || \
+  if grep -qi true <<<"$legacy_all_mode" || grep -qi true <<<"$legacy_pwm_mode" || \
     grep -qi true <<<"$legacy_normalized_mode"
   then
-    echo "ERROR: the running driver is not in PWM-only manual mode." >&2
-    echo "Stop it, then run gmapping.sh again so mapping starts the correct driver mode." >&2
+    echo "ERROR: the running driver has a legacy control input enabled." >&2
+    echo "Stop car.sh/gmapping.sh first, then run nav-one.sh again." >&2
     exit 1
   fi
 fi
 flock -u 8
 
-echo "Starting gmapping..."
-ros2 launch slam_gmapping slam_gmapping.launch.py use_sim_time:=false &
+echo "Starting Hybrid-A*, TEB and the DISARMED command adapter..."
+if [[ "$HAS_MAP_ARGUMENT" == true ]]; then
+  ros2 launch racecar Run_nav.launch.py "$@" &
+else
+  ros2 launch racecar Run_nav.launch.py "$@" \
+    "map:=$DEFAULT_MAP" &
+fi
 PIDS+=("$!")
 
-echo "Mapping is running. In another terminal use: bash save.sh"
-echo "The chassis is DISARMED. For a lifted-wheel/manual test, arm with:"
+echo "After checking /scan, /odom_combined, TF and the steering direction, arm with:"
 echo "  ros2 topic pub --once /nav/arm std_msgs/msg/Bool '{data: true}'"
-echo "Then start the low-speed keyboard controller in another terminal:"
-echo "  ros2 run racecar racecar_teleop.py"
-echo "Software stop:"
+echo "Software stop (keep a person at the physical power switch):"
 echo "  ros2 topic pub --once /nav/estop std_msgs/msg/Bool '{data: true}'"
 
 wait -n "${PIDS[@]}"

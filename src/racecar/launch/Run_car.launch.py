@@ -14,6 +14,7 @@ from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -26,6 +27,12 @@ def generate_launch_description():
     ekf_carto_config = Path(get_package_share_directory('racecar'), 'config', 'ekf_carto.yaml')
     carto_slam = LaunchConfiguration('carto_slam', default='false')
     carto_slam_dec = DeclareLaunchArgument('carto_slam',default_value='false')
+    legacy_pwm_input = LaunchConfiguration('enable_legacy_pwm_input')
+    legacy_normalized_input = LaunchConfiguration('enable_legacy_normalized_input')
+    legacy_pwm_input_dec = DeclareLaunchArgument(
+        'enable_legacy_pwm_input', default_value='false')
+    legacy_normalized_input_dec = DeclareLaunchArgument(
+        'enable_legacy_normalized_input', default_value='false')
 
     # imu
     lslidar_driver_share_dir = get_package_share_directory('lslidar_driver')
@@ -62,7 +69,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         robot_ekf,
-        carto_slam_dec,joint_state_publisher_node,imu_package_arg,
+        carto_slam_dec, legacy_pwm_input_dec, legacy_normalized_input_dec,
+        joint_state_publisher_node,imu_package_arg,
         
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -95,6 +103,18 @@ def generate_launch_description():
             package='racecar_driver',
             executable='racecar_driver_node',
             name='racecar_driver',
+            output='screen',
+            parameters=[{
+                'default_armed': False,
+                'enable_legacy_inputs': False,
+                'enable_legacy_pwm_input': ParameterValue(
+                    legacy_pwm_input, value_type=bool),
+                'enable_legacy_normalized_input': ParameterValue(
+                    legacy_normalized_input, value_type=bool),
+                'command_topic': '/racecar_driver/cmd_pwm',
+                'arm_topic': '/nav/arm',
+                'estop_topic': '/nav/estop',
+            }],
         ),
         Node(
             package='tf2_ros',

@@ -3,7 +3,7 @@ lslidar_driver_node:
     frame_id: laser_link                                    #激光坐标
     group_ip: 224.1.1.2
     add_multicast: false 
-    device_ip: 192.168.1.200                   	            #雷达源IP
+    device_ip: 192.168.1.200                               #雷达源IP
     device_ip_difop: 192.168.1.102                          #雷达目的ip
     msop_port: 2368                                         #雷达目的端口号
     difop_port: 2369                                        #雷达源端口号
@@ -22,7 +22,7 @@ lslidar_driver_node:
     interface_selection: serial                             #接口选择:net 为网口,serial 为串口。
     serial_port_: /dev/laser                              #串口连接时的串口号
     high_reflection: false                                  #M10_P雷达需填写该值,若不确定，请联系技术支持。
-    compensation: false				                              #M10系列是否使用角度补偿功能
+    compensation: false                                   #M10系列是否使用角度补偿功能
     pubScan: true                                           #是否发布scan话题
     pubPointCloud2: false                                    #是否发布pointcloud2话题
     pointcloud_topic: /lslidar_point_cloud                  #设置激光数据topic名称

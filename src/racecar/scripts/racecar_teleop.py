@@ -69,7 +69,9 @@ class RacecarTeleop(Node):
         self.settings = termios.tcgetattr(sys.stdin)
         # self.speed_start_value = 50  # can roll
         self.speed_start_value = 23  # can roll
-        self.turn_start_value = 60  # max value
+        # Keep manual mapping commands inside the safe driver's first-run
+        # envelope (roughly 63..117 steering degrees, 1500..1550 throttle).
+        self.turn_start_value = 25
         self.speed_mid = 1500
         self.turn_mid = 90
         self.speed_bias = 0
@@ -101,7 +103,8 @@ class RacecarTeleop(Node):
                         if self.speed_dir > 0:
                             self.control_speed = self.speed_dir * (self.speed_start_value + self.speed_bias) + self.speed_mid
                         elif self.speed_dir < 0:
-                            self.control_speed = self.speed_dir * (self.speed_start_value + self.speed_bias) + self.speed_mid - 140
+                            # Reverse is intentionally disabled during commissioning.
+                            self.control_speed = self.speed_mid
                         else:
                             self.control_speed = 1500
                         self.control_turn = moveBindings[key][1] * (self.turn_start_value + self.turn_bias) + self.turn_mid
@@ -115,8 +118,8 @@ class RacecarTeleop(Node):
                     self.run = 0
                 elif key == 'w':
                     self.speed_bias += self.speed_add_once
-                    if self.speed_bias >= 450:
-                        self.speed_bias = 450
+                    if self.speed_bias >= 27:
+                        self.speed_bias = 27
                     else:
                         self.last_control_speed = self.last_control_speed + self.speed_add_once
                     self.run = 0
@@ -129,8 +132,8 @@ class RacecarTeleop(Node):
                 elif key == 'a':
                     self.turn_bias += self.turn_add_once
                     self.last_control_turn = self.last_control_turn + self.turn_add_once
-                    if self.turn_bias >= 80:
-                        self.turn_bias = 80
+                    if self.turn_bias >= 2:
+                        self.turn_bias = 2
                     self.run = 0
                 elif key == 'd':
                     self.turn_bias -= self.turn_add_once

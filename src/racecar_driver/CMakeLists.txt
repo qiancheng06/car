@@ -10,6 +10,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 SET(CMAKE_EXE_LINKER_FLAGS " -no-pie")
 
@@ -23,6 +24,7 @@ add_executable(${PROJECT_NAME}_node_one src/racecar_driver_node_one.cpp)
 ament_target_dependencies(${PROJECT_NAME}_node
   rclcpp
   geometry_msgs
+  std_msgs
 )
 
 ament_target_dependencies(${PROJECT_NAME}_node_one
