@@ -34,7 +34,8 @@ public:
     this->declare_parameter<bool>("enable_legacy_pwm_input", false);
     this->declare_parameter<bool>("enable_legacy_normalized_input", false);
 
-    // Conservative first-run actuator envelope. Reverse is blocked.
+    // Conservative first-run actuator envelope. Reverse requires an explicit
+    // launch override and is enabled only for supervised manual control.
     this->declare_parameter<double>("neutral_throttle_pwm", 1500.0);
     this->declare_parameter<double>("min_throttle_pwm", 1500.0);
     this->declare_parameter<double>("max_throttle_pwm", 1550.0);

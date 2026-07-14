@@ -22,8 +22,9 @@ For Holonomic mode (strafing), hold down the shift key:
    M    <    >
 
 space key, k : force stop
-w/x: shift the middle pos of throttle by +/- 5 pwm
+w/s: adjust the forward/reverse speed by +/- 1 pwm
 a/d: shift the middle pos of steering by +/- 2 pwm
+Reverse safety: after changing direction, press the direction key a second time.
 CTRL-C to quit
 """
 
@@ -70,7 +71,7 @@ class RacecarTeleop(Node):
         # self.speed_start_value = 50  # can roll
         self.speed_start_value = 23  # can roll
         # Keep manual mapping commands inside the safe driver's first-run
-        # envelope (roughly 63..117 steering degrees, 1500..1550 throttle).
+        # envelope (roughly 63..117 steering degrees, 1475..1550 throttle).
         self.turn_start_value = 25
         self.speed_mid = 1500
         self.turn_mid = 90
@@ -103,8 +104,11 @@ class RacecarTeleop(Node):
                         if self.speed_dir > 0:
                             self.control_speed = self.speed_dir * (self.speed_start_value + self.speed_bias) + self.speed_mid
                         elif self.speed_dir < 0:
-                            # Reverse is intentionally disabled during commissioning.
-                            self.control_speed = self.speed_mid
+                            # Reverse is intentionally slower than forward while
+                            # commissioning the ESC and drivetrain.
+                            self.control_speed = max(
+                                1475,
+                                self.speed_mid - (self.speed_start_value + self.speed_bias))
                         else:
                             self.control_speed = 1500
                         self.control_turn = moveBindings[key][1] * (self.turn_start_value + self.turn_bias) + self.turn_mid
@@ -112,9 +116,12 @@ class RacecarTeleop(Node):
                     self.last_control_speed = self.control_speed
                     self.last_control_turn = self.control_turn
                 elif key == ' ' or key == 'k':
-                    self.speed_dir = -self.speed_dir  # for ESC Forward/Reverse with brake mode
-                    self.control_speed = self.last_control_speed * self.speed_dir
+                    self.speed_dir = 0
+                    self.last_speed_dir = 0
+                    self.control_speed = self.speed_mid
                     self.control_turn = self.turn_mid
+                    self.last_control_speed = self.control_speed
+                    self.last_control_turn = self.control_turn
                     self.run = 0
                 elif key == 'w':
                     self.speed_bias += self.speed_add_once

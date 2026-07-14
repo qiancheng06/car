@@ -36,6 +36,14 @@ for tree in Path("src/racecar/behavior_trees").glob("*.xml"):
     root = ET.parse(tree).getroot()
     tags = {element.tag for element in root.iter()}
     assert "Spin" not in tags and "BackUp" not in tags, (tree, tags)
+urdf = ET.parse("src/racecar/urdf/racecar.urdf").getroot()
+links = {link.attrib["name"] for link in urdf.findall("link")}
+required_links = {
+    "base_footprint", "base_link", "laser_link", "IMU_link",
+    "left_wheel_link", "right_wheel_link",
+    "caster_front_link", "caster_back_link",
+}
+assert required_links <= links, required_links - links
 print("YAML OK: Hybrid-A* + TEB")
 PY
 

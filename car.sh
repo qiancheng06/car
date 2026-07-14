@@ -50,6 +50,7 @@ echo "The PWM-style /teleop_cmd_vel input is enabled for low-speed mapping/bench
 ros2 launch racecar Run_car.launch.py \
   enable_legacy_pwm_input:=true \
   enable_legacy_normalized_input:=false \
+  min_throttle_pwm:=1475.0 \
   "$@" 8>&- &
 PIDS+=("$!")
 

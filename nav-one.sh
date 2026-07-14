@@ -8,6 +8,8 @@ LOCK_FILE="${XDG_RUNTIME_DIR:-/tmp}/racecar_stack.lock"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
   echo "ERROR: mapping or navigation is already running." >&2
+  fuser -v "$LOCK_FILE" 2>/dev/null || true
+  echo "If ros2 node list is empty, stop the displayed orphan PID before retrying." >&2
   exit 1
 fi
 
@@ -83,7 +85,8 @@ if ! ros2 node list 2>/dev/null | grep -qx '/racecar_driver'; then
   echo "Starting hardware with all legacy command inputs disabled..."
   ros2 launch racecar Run_car.launch.py \
     enable_legacy_pwm_input:=false \
-    enable_legacy_normalized_input:=false 8>&- 9>&- &
+    enable_legacy_normalized_input:=false \
+    min_throttle_pwm:=1500.0 8>&- 9>&- &
   PIDS+=("$!")
   for _ in {1..20}; do
     ros2 node list 2>/dev/null | grep -qx '/racecar_driver' && break
@@ -97,13 +100,15 @@ else
   echo "Reusing the already running hardware stack; no second serial driver will be started."
   if ! legacy_all_mode=$(ros2 param get /racecar_driver enable_legacy_inputs 2>/dev/null) || \
     ! legacy_pwm_mode=$(ros2 param get /racecar_driver enable_legacy_pwm_input 2>/dev/null) || \
-    ! legacy_normalized_mode=$(ros2 param get /racecar_driver enable_legacy_normalized_input 2>/dev/null)
+    ! legacy_normalized_mode=$(ros2 param get /racecar_driver enable_legacy_normalized_input 2>/dev/null) || \
+    ! minimum_throttle=$(ros2 param get /racecar_driver min_throttle_pwm 2>/dev/null)
   then
     echo "ERROR: cannot read the running driver's safety mode." >&2
     exit 1
   fi
   if grep -qi true <<<"$legacy_all_mode" || grep -qi true <<<"$legacy_pwm_mode" || \
-    grep -qi true <<<"$legacy_normalized_mode"
+    grep -qi true <<<"$legacy_normalized_mode" || \
+    ! grep -Eq '(^|[^0-9])1500(\.0+)?([^0-9]|$)' <<<"$minimum_throttle"
   then
     echo "ERROR: the running driver has a legacy control input enabled." >&2
     echo "Stop car.sh/gmapping.sh first, then run nav-one.sh again." >&2

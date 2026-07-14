@@ -21,6 +21,8 @@ def generate_launch_description():
     # Get the launch directory
     bringup_dir = get_package_share_directory('racecar')
     launch_dir = os.path.join(bringup_dir, 'launch')
+    robot_description = Path(
+        bringup_dir, 'urdf', 'racecar.urdf').read_text(encoding='utf-8')
         
     ekf_config = Path(get_package_share_directory('racecar'), 'config', 'ekf.yaml')
 
@@ -29,10 +31,14 @@ def generate_launch_description():
     carto_slam_dec = DeclareLaunchArgument('carto_slam',default_value='false')
     legacy_pwm_input = LaunchConfiguration('enable_legacy_pwm_input')
     legacy_normalized_input = LaunchConfiguration('enable_legacy_normalized_input')
+    min_throttle_pwm = LaunchConfiguration('min_throttle_pwm')
     legacy_pwm_input_dec = DeclareLaunchArgument(
         'enable_legacy_pwm_input', default_value='false')
     legacy_normalized_input_dec = DeclareLaunchArgument(
         'enable_legacy_normalized_input', default_value='false')
+    min_throttle_pwm_dec = DeclareLaunchArgument(
+        'min_throttle_pwm', default_value='1500.0',
+        description='Minimum allowed throttle PWM; use 1475 only for supervised manual reverse')
 
     # imu
     lslidar_driver_share_dir = get_package_share_directory('lslidar_driver')
@@ -60,17 +66,20 @@ def generate_launch_description():
 
         
                            
-    joint_state_publisher_node = launch_ros.actions.Node(
-        package='joint_state_publisher', 
-        executable='joint_state_publisher', 
-        name='joint_state_publisher',
+    robot_state_publisher_node = launch_ros.actions.Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{'robot_description': robot_description}],
     )
 
 
     return LaunchDescription([
         robot_ekf,
         carto_slam_dec, legacy_pwm_input_dec, legacy_normalized_input_dec,
-        joint_state_publisher_node,imu_package_arg,
+        min_throttle_pwm_dec,
+        robot_state_publisher_node,imu_package_arg,
         
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
@@ -114,26 +123,9 @@ def generate_launch_description():
                 'command_topic': '/racecar_driver/cmd_pwm',
                 'arm_topic': '/nav/arm',
                 'estop_topic': '/nav/estop',
+                'min_throttle_pwm': ParameterValue(
+                    min_throttle_pwm, value_type=float),
             }],
         ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='base_footprint2base_link',
-            arguments=['--x', '0.0', '--y', '0.0', '--z', '0.15', '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0', '--frame-id', 'base_footprint', '--child-frame-id', 'base_link']
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='base_link2laser_link',
-            arguments=['--x', '0.07', '--y', '0.0', '--z', '0.0', '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0', '--frame-id', 'base_footprint', '--child-frame-id', 'laser_link']
-        ),
-        Node(
-            package='tf2_ros',
-            executable='static_transform_publisher',
-            name='base_link2imu',
-            arguments=['--x', '0.1653', '--y', '0.0', '--z', '0.0', '--yaw', '0.0', '--pitch', '0.0', '--roll', '0.0', '--frame-id', 'base_footprint', '--child-frame-id', 'IMU_link']
-        )
-
     ])
 

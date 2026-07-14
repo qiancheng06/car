@@ -33,7 +33,7 @@
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>encoder</exec_depend>
   <exec_depend>hipnuc_imu</exec_depend>
-  <exec_depend>joint_state_publisher</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>lslidar_driver</exec_depend>
   <exec_depend>racecar_driver</exec_depend>
   <exec_depend>robot_localization</exec_depend>
