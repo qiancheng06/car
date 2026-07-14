@@ -1,0 +1,4 @@
+source;share/racecar/local_setup.bash
+source;share/racecar/local_setup.dsv
+source;share/racecar/local_setup.sh
+source;share/racecar/local_setup.zsh

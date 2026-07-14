@@ -1,0 +1,7 @@
+setup.py
+racecar/__init__.py
+racecar/module_to_import.py
+racecar.egg-info/PKG-INFO
+racecar.egg-info/SOURCES.txt
+racecar.egg-info/dependency_links.txt
+racecar.egg-info/top_level.txt

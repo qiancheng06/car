@@ -1,0 +1,1 @@
+/home/davinci-mini/racecar/build/hipnuc_imu/ament_cmake_core/hipnuc_imuConfig.cmake

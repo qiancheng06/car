@@ -1,0 +1,4 @@
+[console_scripts]
+car_test_node = two_lap_control.car_test_node:main
+cv_follow_node = two_lap_control.cv_follow_node:main
+

@@ -1,0 +1,142 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-29e383f8d992ad6f428d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.12"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"name" : "",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "racecar",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_build_racecar_egg::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_build_racecar_egg-8bb9b0dc6320bbb9e69d.json",
+					"name" : "ament_cmake_python_build_racecar_egg",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "ament_cmake_python_symlink_racecar::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-ament_cmake_python_symlink_racecar-b9669be380d9f806fec5.json",
+					"name" : "ament_cmake_python_symlink_racecar",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "car_control_all::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-car_control_all-fdaddf2fba385dcf710f.json",
+					"name" : "car_control_all",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "car_controller_new::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-car_controller_new-8a2466abf1983db9ab11.json",
+					"name" : "car_controller_new",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "car_test::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-car_test-b674fba8d013c40b7e80.json",
+					"name" : "car_test",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "laser_2d_new::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-laser_2d_new-e66a4615dcd902dc24b0.json",
+					"name" : "laser_2d_new",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "my_car_control_new::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-my_car_control_new-1b1b5ae4f97b66964db4.json",
+					"name" : "my_car_control_new",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "racecar_uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-racecar_uninstall-ebc2ecc250bbc72d4cb3.json",
+					"name" : "racecar_uninstall",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "scan_node::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-scan_node-4b42e2627b057c85b928.json",
+					"name" : "scan_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "uninstall::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-uninstall-b8b92376f138f0927e5a.json",
+					"name" : "uninstall",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/davinci-mini/racecar/build/racecar",
+		"source" : "/home/davinci-mini/racecar/src/racecar"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 3
+	}
+}

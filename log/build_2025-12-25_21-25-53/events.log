@@ -1,0 +1,571 @@
+[0.000000] (-) TimerEvent: {}
+[0.000828] (-) JobUnselected: {'identifier': 'encoder'}
+[0.001559] (-) JobUnselected: {'identifier': 'hipnuc_imu'}
+[0.002015] (-) JobUnselected: {'identifier': 'lidar_tracking'}
+[0.002468] (-) JobUnselected: {'identifier': 'lslidar_driver'}
+[0.002625] (-) JobUnselected: {'identifier': 'lslidar_msgs'}
+[0.002752] (-) JobUnselected: {'identifier': 'nav2_waypoint_cycle'}
+[0.002870] (-) JobUnselected: {'identifier': 'openslam_gmapping'}
+[0.002986] (-) JobUnselected: {'identifier': 'python_myself'}
+[0.003134] (-) JobUnselected: {'identifier': 'racecar'}
+[0.003266] (-) JobUnselected: {'identifier': 'racecar_driver'}
+[0.003383] (-) JobUnselected: {'identifier': 'serial'}
+[0.003494] (-) JobUnselected: {'identifier': 'two_lap_control'}
+[0.003611] (slam_gmapping) JobQueued: {'identifier': 'slam_gmapping', 'dependencies': OrderedDict([('openslam_gmapping', '/home/davinci-mini/racecar/install/openslam_gmapping')])}
+[0.003745] (slam_gmapping) JobStarted: {'identifier': 'slam_gmapping'}
+[0.046204] (slam_gmapping) JobProgress: {'identifier': 'slam_gmapping', 'progress': 'cmake'}
+[0.049689] (slam_gmapping) JobProgress: {'identifier': 'slam_gmapping', 'progress': 'build'}
+[0.052050] (slam_gmapping) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/davinci-mini/racecar/build/slam_gmapping', '--', '-j3', '-l3'], 'cwd': '/home/davinci-mini/racecar/build/slam_gmapping', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'davinci-mini'), ('SSH_CLIENT', '192.168.5.17 62340 22'), ('XDG_SESSION_TYPE', 'tty'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/davinci-mini/racecar/install/serial/lib:/home/davinci-mini/racecar/install/openslam_gmapping/lib:/home/davinci-mini/racecar/install/lslidar_msgs/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib'), ('MOTD_SHOWN', 'pam'), ('HOME', '/home/davinci-mini'), ('OLDPWD', '/home/davinci-mini'), ('SSH_TTY', '/dev/pts/0'), ('ROS_PYTHON_VERSION', '3'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1001/bus'), ('COLCON_PREFIX_PATH', '/home/davinci-mini/racecar/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'davinci-mini'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERM', 'xterm'), ('XDG_SESSION_ID', '4'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/davinci-mini/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('XDG_RUNTIME_DIR', '/run/user/1001'), ('DISPLAY', 'localhost:10.0'), ('LANG', 'C.UTF-8'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('AMENT_PREFIX_PATH', '/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/slam_gmapping:/home/davinci-mini/racecar/install/serial:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/racecar_driver:/home/davinci-mini/racecar/install/racecar:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/openslam_gmapping:/home/davinci-mini/racecar/install/odom_tf:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/lslidar_driver:/home/davinci-mini/racecar/install/lslidar_msgs:/home/davinci-mini/racecar/install/lidar_tracking:/home/davinci-mini/racecar/install/hipnuc_imu:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('PWD', '/home/davinci-mini/racecar/build/slam_gmapping'), ('SSH_CONNECTION', '192.168.5.17 62340 192.168.5.100 22'), ('XDG_DATA_DIRS', '/usr/local/share:/usr/share:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/davinci-mini/racecar/build/two_lap_control:/home/davinci-mini/racecar/install/two_lap_control/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/racecar_twoloop/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages:/home/davinci-mini/racecar/build/python_myself:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/nav2_waypoint_cycle/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/lslidar_msgs/local/lib/python3.10/dist-packages:/home/davinci-mini/racecar/install/encoder/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/davinci-mini/racecar/install/openslam_gmapping:/home/davinci-mini/racecar/install/slam_gmapping:/home/davinci-mini/racecar/install/serial:/home/davinci-mini/racecar/install/racecar_driver:/home/davinci-mini/racecar/install/racecar:/home/davinci-mini/racecar/install/odom_tf:/home/davinci-mini/racecar/install/lslidar_driver:/home/davinci-mini/racecar/install/lslidar_msgs:/home/davinci-mini/racecar/install/lidar_tracking:/home/davinci-mini/racecar/install/hipnuc_imu:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble')]), 'shell': False}
+[0.099083] (-) TimerEvent: {}
+[0.199743] (-) TimerEvent: {}
+[0.300492] (-) TimerEvent: {}
+[0.401310] (-) TimerEvent: {}
+[0.457183] (slam_gmapping) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/slam_gmapping.dir/src/slam_gmapping.cpp.o\x1b[0m\n'}
+[0.501335] (-) TimerEvent: {}
+[0.601984] (-) TimerEvent: {}
+[0.702675] (-) TimerEvent: {}
+[0.803366] (-) TimerEvent: {}
+[0.904057] (-) TimerEvent: {}
+[1.004744] (-) TimerEvent: {}
+[1.105438] (-) TimerEvent: {}
+[1.206082] (-) TimerEvent: {}
+[1.306698] (-) TimerEvent: {}
+[1.407589] (-) TimerEvent: {}
+[1.508266] (-) TimerEvent: {}
+[1.608942] (-) TimerEvent: {}
+[1.698696] (slam_gmapping) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/include/slam_gmapping/slam_gmapping.h:38\x1b[m\x1b[K,\n'}
+[1.699346] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/src/slam_gmapping.cpp:24\x1b[m\x1b[K:\n'}
+[1.699661] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/opt/ros/humble/include/tf2_geometry_msgs/tf2_geometry_msgs/tf2_geometry_msgs.h:35:2:\x1b[m\x1b[K \x1b[01;35m\x1b[Kwarning: \x1b[m\x1b[K#warning This header is obsolete, please include tf2_geometry_msgs/tf2_geometry_msgs.hpp instead [\x1b[01;35m\x1b[K-Wcpp\x1b[m\x1b[K]\n'}
+[1.699935] (slam_gmapping) StderrLine: {'line': b'   35 | #\x1b[01;35m\x1b[Kwarning\x1b[m\x1b[K This header is obsolete, please include tf2_geometry_msgs/tf2_geometry_msgs.hpp instead\n'}
+[1.700215] (slam_gmapping) StderrLine: {'line': b'      |  \x1b[01;35m\x1b[K^~~~~~~\x1b[m\x1b[K\n'}
+[1.709009] (-) TimerEvent: {}
+[1.809514] (-) TimerEvent: {}
+[1.910172] (-) TimerEvent: {}
+[2.010860] (-) TimerEvent: {}
+[2.111529] (-) TimerEvent: {}
+[2.212124] (-) TimerEvent: {}
+[2.312700] (-) TimerEvent: {}
+[2.413314] (-) TimerEvent: {}
+[2.514023] (-) TimerEvent: {}
+[2.614712] (-) TimerEvent: {}
+[2.715367] (-) TimerEvent: {}
+[2.816034] (-) TimerEvent: {}
+[2.916715] (-) TimerEvent: {}
+[3.017408] (-) TimerEvent: {}
+[3.118082] (-) TimerEvent: {}
+[3.218743] (-) TimerEvent: {}
+[3.319448] (-) TimerEvent: {}
+[3.420128] (-) TimerEvent: {}
+[3.520824] (-) TimerEvent: {}
+[3.621572] (-) TimerEvent: {}
+[3.722391] (-) TimerEvent: {}
+[3.823055] (-) TimerEvent: {}
+[3.923799] (-) TimerEvent: {}
+[4.024486] (-) TimerEvent: {}
+[4.125158] (-) TimerEvent: {}
+[4.225817] (-) TimerEvent: {}
+[4.326487] (-) TimerEvent: {}
+[4.427165] (-) TimerEvent: {}
+[4.527869] (-) TimerEvent: {}
+[4.628538] (-) TimerEvent: {}
+[4.729190] (-) TimerEvent: {}
+[4.829848] (-) TimerEvent: {}
+[4.930511] (-) TimerEvent: {}
+[5.031239] (-) TimerEvent: {}
+[5.131916] (-) TimerEvent: {}
+[5.232591] (-) TimerEvent: {}
+[5.333289] (-) TimerEvent: {}
+[5.433988] (-) TimerEvent: {}
+[5.534698] (-) TimerEvent: {}
+[5.635621] (-) TimerEvent: {}
+[5.736268] (-) TimerEvent: {}
+[5.836918] (-) TimerEvent: {}
+[5.937584] (-) TimerEvent: {}
+[6.038268] (-) TimerEvent: {}
+[6.138908] (-) TimerEvent: {}
+[6.239693] (-) TimerEvent: {}
+[6.340300] (-) TimerEvent: {}
+[6.440942] (-) TimerEvent: {}
+[6.541626] (-) TimerEvent: {}
+[6.642310] (-) TimerEvent: {}
+[6.742977] (-) TimerEvent: {}
+[6.843711] (-) TimerEvent: {}
+[6.944394] (-) TimerEvent: {}
+[7.045089] (-) TimerEvent: {}
+[7.145765] (-) TimerEvent: {}
+[7.246402] (-) TimerEvent: {}
+[7.347044] (-) TimerEvent: {}
+[7.447769] (-) TimerEvent: {}
+[7.548457] (-) TimerEvent: {}
+[7.649123] (-) TimerEvent: {}
+[7.749763] (-) TimerEvent: {}
+[7.850400] (-) TimerEvent: {}
+[7.951077] (-) TimerEvent: {}
+[8.051766] (-) TimerEvent: {}
+[8.152394] (-) TimerEvent: {}
+[8.252961] (-) TimerEvent: {}
+[8.353596] (-) TimerEvent: {}
+[8.454282] (-) TimerEvent: {}
+[8.554972] (-) TimerEvent: {}
+[8.655719] (-) TimerEvent: {}
+[8.756351] (-) TimerEvent: {}
+[8.857006] (-) TimerEvent: {}
+[8.957696] (-) TimerEvent: {}
+[9.058384] (-) TimerEvent: {}
+[9.159044] (-) TimerEvent: {}
+[9.259719] (-) TimerEvent: {}
+[9.360377] (-) TimerEvent: {}
+[9.461073] (-) TimerEvent: {}
+[9.561760] (-) TimerEvent: {}
+[9.662425] (-) TimerEvent: {}
+[9.763052] (-) TimerEvent: {}
+[9.863713] (-) TimerEvent: {}
+[9.964396] (-) TimerEvent: {}
+[10.065082] (-) TimerEvent: {}
+[10.165741] (-) TimerEvent: {}
+[10.266332] (-) TimerEvent: {}
+[10.366964] (-) TimerEvent: {}
+[10.467718] (-) TimerEvent: {}
+[10.568408] (-) TimerEvent: {}
+[10.669065] (-) TimerEvent: {}
+[10.769697] (-) TimerEvent: {}
+[10.870363] (-) TimerEvent: {}
+[10.971055] (-) TimerEvent: {}
+[11.071765] (-) TimerEvent: {}
+[11.172410] (-) TimerEvent: {}
+[11.272999] (-) TimerEvent: {}
+[11.373634] (-) TimerEvent: {}
+[11.474329] (-) TimerEvent: {}
+[11.575022] (-) TimerEvent: {}
+[11.592710] (slam_gmapping) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/home/davinci-mini/racecar/install/openslam_gmapping/include/gmapping/gridfastslam/gridslamprocessor.h:9\x1b[m\x1b[K,\n'}
+[11.593304] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/include/slam_gmapping/slam_gmapping.h:45\x1b[m\x1b[K,\n'}
+[11.593601] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/src/slam_gmapping.cpp:24\x1b[m\x1b[K:\n'}
+[11.593859] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/home/davinci-mini/racecar/install/openslam_gmapping/include/gmapping/particlefilter/particlefilter.h:\x1b[m\x1b[K In function \xe2\x80\x98\x1b[01m\x1b[Kvoid rle(OutputIterator&, const Iterator&, const Iterator&)\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[11.594118] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/home/davinci-mini/racecar/install/openslam_gmapping/include/gmapping/particlefilter/particlefilter.h:140:9:\x1b[m\x1b[K \x1b[01;35m\x1b[Kwarning: \x1b[m\x1b[Kthis \xe2\x80\x98\x1b[01m\x1b[Kif\x1b[m\x1b[K\xe2\x80\x99 clause does not guard... [\x1b[01;35m\x1b[K-Wmisleading-indentation\x1b[m\x1b[K]\n'}
+[11.594419] (slam_gmapping) StderrLine: {'line': b'  140 |         \x1b[01;35m\x1b[Kif\x1b[m\x1b[K (count>0)\n'}
+[11.594657] (slam_gmapping) StderrLine: {'line': b'      |         \x1b[01;35m\x1b[K^~\x1b[m\x1b[K\n'}
+[11.594888] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/home/davinci-mini/racecar/install/openslam_gmapping/include/gmapping/particlefilter/particlefilter.h:142:17:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[K...this statement, but the latter is misleadingly indented as if it were guarded by the \xe2\x80\x98\x1b[01m\x1b[Kif\x1b[m\x1b[K\xe2\x80\x99\n'}
+[11.595125] (slam_gmapping) StderrLine: {'line': b'  142 |                 \x1b[01;36m\x1b[Kout\x1b[m\x1b[K++;\n'}
+[11.595392] (slam_gmapping) StderrLine: {'line': b'      |                 \x1b[01;36m\x1b[K^~~\x1b[m\x1b[K\n'}
+[11.675180] (-) TimerEvent: {}
+[11.775892] (-) TimerEvent: {}
+[11.876572] (-) TimerEvent: {}
+[11.977281] (-) TimerEvent: {}
+[12.077974] (-) TimerEvent: {}
+[12.178643] (-) TimerEvent: {}
+[12.279298] (-) TimerEvent: {}
+[12.379963] (-) TimerEvent: {}
+[12.480697] (-) TimerEvent: {}
+[12.581386] (-) TimerEvent: {}
+[12.682058] (-) TimerEvent: {}
+[12.747203] (slam_gmapping) StderrLine: {'line': b'In file included from \x1b[01m\x1b[K/usr/include/c++/11/utility:70\x1b[m\x1b[K,\n'}
+[12.747917] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/usr/include/c++/11/tuple:38\x1b[m\x1b[K,\n'}
+[12.748220] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/usr/include/c++/11/mutex:38\x1b[m\x1b[K,\n'}
+[12.748482] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/include/slam_gmapping/slam_gmapping.h:26\x1b[m\x1b[K,\n'}
+[12.748722] (slam_gmapping) StderrLine: {'line': b'                 from \x1b[01m\x1b[K/home/davinci-mini/racecar/src/slam_gmapping/src/slam_gmapping.cpp:24\x1b[m\x1b[K:\n'}
+[12.748961] (slam_gmapping) StderrLine: {'line': b'/usr/include/c++/11/bits/stl_pair.h: In instantiation of \xe2\x80\x98\x1b[01m\x1b[Kconstexpr std::pair<typename std::__strip_reference_wrapper<typename std::decay<_Tp>::type>::__type, typename std::__strip_reference_wrapper<typename std::decay<_Tp2>::type>::__type> std::make_pair(_T1&&, _T2&&) [with _T1 = GMapping::point<double>&; _T2 = GMapping::point<double>&; typename std::__strip_reference_wrapper<typename std::decay<_Tp2>::type>::__type = GMapping::point<double>; typename std::decay<_Tp2>::type = std::decay<GMapping::point<double>&>::type; typename std::__strip_reference_wrapper<typename std::decay<_Tp>::type>::__type = GMapping::point<double>; typename std::decay<_Tp>::type = std::decay<GMapping::point<double>&>::type]\x1b[m\x1b[K\xe2\x80\x99:\n'}
+[12.749257] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/home/davinci-mini/racecar/install/openslam_gmapping/include/gmapping/scanmatcher/scanmatcher.h:127:34:\x1b[m\x1b[K   required from here\n'}
+[12.749637] (slam_gmapping) StderrLine: {'line': b'\x1b[01m\x1b[K/usr/include/c++/11/bits/stl_pair.h:567:5:\x1b[m\x1b[K \x1b[01;36m\x1b[Knote: \x1b[m\x1b[Kparameter passing for argument of type \xe2\x80\x98\x1b[01m\x1b[Kstd::pair<GMapping::point<double>, GMapping::point<double> >\x1b[m\x1b[K\xe2\x80\x99 when C++17 is enabled changed to match C++14 in GCC 10.1\n'}
+[12.749897] (slam_gmapping) StderrLine: {'line': b'  567 |     \x1b[01;36m\x1b[Kmake_pair\x1b[m\x1b[K(_T1&& __x, _T2&& __y)\n'}
+[12.750135] (slam_gmapping) StderrLine: {'line': b'      |     \x1b[01;36m\x1b[K^~~~~~~~~\x1b[m\x1b[K\n'}
+[12.782163] (-) TimerEvent: {}
+[12.882781] (-) TimerEvent: {}
+[12.983517] (-) TimerEvent: {}
+[13.084211] (-) TimerEvent: {}
+[13.184874] (-) TimerEvent: {}
+[13.285512] (-) TimerEvent: {}
+[13.386192] (-) TimerEvent: {}
+[13.486920] (-) TimerEvent: {}
+[13.587697] (-) TimerEvent: {}
+[13.688411] (-) TimerEvent: {}
+[13.789097] (-) TimerEvent: {}
+[13.889758] (-) TimerEvent: {}
+[13.990454] (-) TimerEvent: {}
+[14.091095] (-) TimerEvent: {}
+[14.191701] (-) TimerEvent: {}
+[14.292271] (-) TimerEvent: {}
+[14.392896] (-) TimerEvent: {}
+[14.493584] (-) TimerEvent: {}
+[14.594234] (-) TimerEvent: {}
+[14.694823] (-) TimerEvent: {}
+[14.795452] (-) TimerEvent: {}
+[14.896107] (-) TimerEvent: {}
+[14.996808] (-) TimerEvent: {}
+[15.097426] (-) TimerEvent: {}
+[15.197945] (-) TimerEvent: {}
+[15.298493] (-) TimerEvent: {}
+[15.399420] (-) TimerEvent: {}
+[15.500635] (-) TimerEvent: {}
+[15.601352] (-) TimerEvent: {}
+[15.702028] (-) TimerEvent: {}
+[15.802701] (-) TimerEvent: {}
+[15.903396] (-) TimerEvent: {}
+[16.004090] (-) TimerEvent: {}
+[16.104759] (-) TimerEvent: {}
+[16.205419] (-) TimerEvent: {}
+[16.306072] (-) TimerEvent: {}
+[16.406739] (-) TimerEvent: {}
+[16.507449] (-) TimerEvent: {}
+[16.608133] (-) TimerEvent: {}
+[16.708800] (-) TimerEvent: {}
+[16.809460] (-) TimerEvent: {}
+[16.910152] (-) TimerEvent: {}
+[17.010840] (-) TimerEvent: {}
+[17.111528] (-) TimerEvent: {}
+[17.212179] (-) TimerEvent: {}
+[17.312831] (-) TimerEvent: {}
+[17.413506] (-) TimerEvent: {}
+[17.514193] (-) TimerEvent: {}
+[17.614861] (-) TimerEvent: {}
+[17.715532] (-) TimerEvent: {}
+[17.816185] (-) TimerEvent: {}
+[17.916865] (-) TimerEvent: {}
+[18.017546] (-) TimerEvent: {}
+[18.118220] (-) TimerEvent: {}
+[18.218880] (-) TimerEvent: {}
+[18.319592] (-) TimerEvent: {}
+[18.420268] (-) TimerEvent: {}
+[18.520963] (-) TimerEvent: {}
+[18.621647] (-) TimerEvent: {}
+[18.722405] (-) TimerEvent: {}
+[18.823064] (-) TimerEvent: {}
+[18.923754] (-) TimerEvent: {}
+[19.024417] (-) TimerEvent: {}
+[19.125070] (-) TimerEvent: {}
+[19.225685] (-) TimerEvent: {}
+[19.326321] (-) TimerEvent: {}
+[19.426997] (-) TimerEvent: {}
+[19.527711] (-) TimerEvent: {}
+[19.628384] (-) TimerEvent: {}
+[19.729047] (-) TimerEvent: {}
+[19.829733] (-) TimerEvent: {}
+[19.930432] (-) TimerEvent: {}
+[20.031163] (-) TimerEvent: {}
+[20.131834] (-) TimerEvent: {}
+[20.232399] (-) TimerEvent: {}
+[20.332976] (-) TimerEvent: {}
+[20.433591] (-) TimerEvent: {}
+[20.534280] (-) TimerEvent: {}
+[20.634948] (-) TimerEvent: {}
+[20.735607] (-) TimerEvent: {}
+[20.836201] (-) TimerEvent: {}
+[20.936846] (-) TimerEvent: {}
+[21.037597] (-) TimerEvent: {}
+[21.138231] (-) TimerEvent: {}
+[21.238779] (-) TimerEvent: {}
+[21.339344] (-) TimerEvent: {}
+[21.439974] (-) TimerEvent: {}
+[21.540661] (-) TimerEvent: {}
+[21.641313] (-) TimerEvent: {}
+[21.741937] (-) TimerEvent: {}
+[21.842549] (-) TimerEvent: {}
+[21.943226] (-) TimerEvent: {}
+[22.043910] (-) TimerEvent: {}
+[22.144566] (-) TimerEvent: {}
+[22.245179] (-) TimerEvent: {}
+[22.345777] (-) TimerEvent: {}
+[22.446449] (-) TimerEvent: {}
+[22.547126] (-) TimerEvent: {}
+[22.647833] (-) TimerEvent: {}
+[22.748476] (-) TimerEvent: {}
+[22.849125] (-) TimerEvent: {}
+[22.949803] (-) TimerEvent: {}
+[23.050492] (-) TimerEvent: {}
+[23.151137] (-) TimerEvent: {}
+[23.251767] (-) TimerEvent: {}
+[23.352386] (-) TimerEvent: {}
+[23.453063] (-) TimerEvent: {}
+[23.553741] (-) TimerEvent: {}
+[23.654399] (-) TimerEvent: {}
+[23.755104] (-) TimerEvent: {}
+[23.855803] (-) TimerEvent: {}
+[23.956477] (-) TimerEvent: {}
+[24.057158] (-) TimerEvent: {}
+[24.157786] (-) TimerEvent: {}
+[24.258372] (-) TimerEvent: {}
+[24.359002] (-) TimerEvent: {}
+[24.459700] (-) TimerEvent: {}
+[24.560375] (-) TimerEvent: {}
+[24.661038] (-) TimerEvent: {}
+[24.761679] (-) TimerEvent: {}
+[24.862330] (-) TimerEvent: {}
+[24.963027] (-) TimerEvent: {}
+[25.063792] (-) TimerEvent: {}
+[25.164428] (-) TimerEvent: {}
+[25.265010] (-) TimerEvent: {}
+[25.365629] (-) TimerEvent: {}
+[25.466326] (-) TimerEvent: {}
+[25.567011] (-) TimerEvent: {}
+[25.667747] (-) TimerEvent: {}
+[25.768384] (-) TimerEvent: {}
+[25.869049] (-) TimerEvent: {}
+[25.969845] (-) TimerEvent: {}
+[26.070555] (-) TimerEvent: {}
+[26.171265] (-) TimerEvent: {}
+[26.271892] (-) TimerEvent: {}
+[26.372541] (-) TimerEvent: {}
+[26.473216] (-) TimerEvent: {}
+[26.573836] (-) TimerEvent: {}
+[26.674447] (-) TimerEvent: {}
+[26.775058] (-) TimerEvent: {}
+[26.875725] (-) TimerEvent: {}
+[26.976412] (-) TimerEvent: {}
+[27.077133] (-) TimerEvent: {}
+[27.177788] (-) TimerEvent: {}
+[27.278403] (-) TimerEvent: {}
+[27.379033] (-) TimerEvent: {}
+[27.479733] (-) TimerEvent: {}
+[27.580398] (-) TimerEvent: {}
+[27.681040] (-) TimerEvent: {}
+[27.781676] (-) TimerEvent: {}
+[27.882325] (-) TimerEvent: {}
+[27.983002] (-) TimerEvent: {}
+[28.083752] (-) TimerEvent: {}
+[28.184400] (-) TimerEvent: {}
+[28.285032] (-) TimerEvent: {}
+[28.385685] (-) TimerEvent: {}
+[28.486370] (-) TimerEvent: {}
+[28.587034] (-) TimerEvent: {}
+[28.687709] (-) TimerEvent: {}
+[28.788349] (-) TimerEvent: {}
+[28.888996] (-) TimerEvent: {}
+[28.989698] (-) TimerEvent: {}
+[29.090413] (-) TimerEvent: {}
+[29.191065] (-) TimerEvent: {}
+[29.291659] (-) TimerEvent: {}
+[29.392269] (-) TimerEvent: {}
+[29.492935] (-) TimerEvent: {}
+[29.593559] (-) TimerEvent: {}
+[29.694172] (-) TimerEvent: {}
+[29.794786] (-) TimerEvent: {}
+[29.895460] (-) TimerEvent: {}
+[29.996154] (-) TimerEvent: {}
+[30.096808] (-) TimerEvent: {}
+[30.197409] (-) TimerEvent: {}
+[30.298015] (-) TimerEvent: {}
+[30.398643] (-) TimerEvent: {}
+[30.499323] (-) TimerEvent: {}
+[30.599940] (-) TimerEvent: {}
+[30.700546] (-) TimerEvent: {}
+[30.801181] (-) TimerEvent: {}
+[30.901843] (-) TimerEvent: {}
+[31.002508] (-) TimerEvent: {}
+[31.103154] (-) TimerEvent: {}
+[31.203806] (-) TimerEvent: {}
+[31.304437] (-) TimerEvent: {}
+[31.405092] (-) TimerEvent: {}
+[31.505779] (-) TimerEvent: {}
+[31.606424] (-) TimerEvent: {}
+[31.707064] (-) TimerEvent: {}
+[31.807721] (-) TimerEvent: {}
+[31.908873] (-) TimerEvent: {}
+[32.009548] (-) TimerEvent: {}
+[32.110194] (-) TimerEvent: {}
+[32.210833] (-) TimerEvent: {}
+[32.311498] (-) TimerEvent: {}
+[32.412152] (-) TimerEvent: {}
+[32.512817] (-) TimerEvent: {}
+[32.613467] (-) TimerEvent: {}
+[32.714104] (-) TimerEvent: {}
+[32.814743] (-) TimerEvent: {}
+[32.915377] (-) TimerEvent: {}
+[33.016045] (-) TimerEvent: {}
+[33.116703] (-) TimerEvent: {}
+[33.217331] (-) TimerEvent: {}
+[33.317960] (-) TimerEvent: {}
+[33.418620] (-) TimerEvent: {}
+[33.519327] (-) TimerEvent: {}
+[33.619978] (-) TimerEvent: {}
+[33.720617] (-) TimerEvent: {}
+[33.821267] (-) TimerEvent: {}
+[33.921954] (-) TimerEvent: {}
+[34.022649] (-) TimerEvent: {}
+[34.123341] (-) TimerEvent: {}
+[34.224002] (-) TimerEvent: {}
+[34.324661] (-) TimerEvent: {}
+[34.425347] (-) TimerEvent: {}
+[34.526051] (-) TimerEvent: {}
+[34.626717] (-) TimerEvent: {}
+[34.727360] (-) TimerEvent: {}
+[34.828016] (-) TimerEvent: {}
+[34.928701] (-) TimerEvent: {}
+[35.029396] (-) TimerEvent: {}
+[35.130069] (-) TimerEvent: {}
+[35.230730] (-) TimerEvent: {}
+[35.331399] (-) TimerEvent: {}
+[35.439561] (-) TimerEvent: {}
+[35.540295] (-) TimerEvent: {}
+[35.641042] (-) TimerEvent: {}
+[35.741701] (-) TimerEvent: {}
+[35.842372] (-) TimerEvent: {}
+[35.943081] (-) TimerEvent: {}
+[36.043806] (-) TimerEvent: {}
+[36.144426] (-) TimerEvent: {}
+[36.244975] (-) TimerEvent: {}
+[36.345570] (-) TimerEvent: {}
+[36.446229] (-) TimerEvent: {}
+[36.546900] (-) TimerEvent: {}
+[36.647724] (-) TimerEvent: {}
+[36.748332] (-) TimerEvent: {}
+[36.848980] (-) TimerEvent: {}
+[36.949644] (-) TimerEvent: {}
+[37.050314] (-) TimerEvent: {}
+[37.150954] (-) TimerEvent: {}
+[37.251595] (-) TimerEvent: {}
+[37.352224] (-) TimerEvent: {}
+[37.452894] (-) TimerEvent: {}
+[37.553563] (-) TimerEvent: {}
+[37.654209] (-) TimerEvent: {}
+[37.754833] (-) TimerEvent: {}
+[37.855848] (-) TimerEvent: {}
+[37.956519] (-) TimerEvent: {}
+[38.057178] (-) TimerEvent: {}
+[38.157817] (-) TimerEvent: {}
+[38.258447] (-) TimerEvent: {}
+[38.359105] (-) TimerEvent: {}
+[38.459839] (-) TimerEvent: {}
+[38.560500] (-) TimerEvent: {}
+[38.661165] (-) TimerEvent: {}
+[38.761803] (-) TimerEvent: {}
+[38.862449] (-) TimerEvent: {}
+[38.963120] (-) TimerEvent: {}
+[39.063840] (-) TimerEvent: {}
+[39.164481] (-) TimerEvent: {}
+[39.265091] (-) TimerEvent: {}
+[39.365727] (-) TimerEvent: {}
+[39.466409] (-) TimerEvent: {}
+[39.567071] (-) TimerEvent: {}
+[39.667733] (-) TimerEvent: {}
+[39.768367] (-) TimerEvent: {}
+[39.869020] (-) TimerEvent: {}
+[39.969699] (-) TimerEvent: {}
+[40.070368] (-) TimerEvent: {}
+[40.171019] (-) TimerEvent: {}
+[40.271669] (-) TimerEvent: {}
+[40.372334] (-) TimerEvent: {}
+[40.473041] (-) TimerEvent: {}
+[40.573800] (-) TimerEvent: {}
+[40.674455] (-) TimerEvent: {}
+[40.775094] (-) TimerEvent: {}
+[40.875786] (-) TimerEvent: {}
+[40.976469] (-) TimerEvent: {}
+[41.077135] (-) TimerEvent: {}
+[41.177782] (-) TimerEvent: {}
+[41.278407] (-) TimerEvent: {}
+[41.379054] (-) TimerEvent: {}
+[41.479737] (-) TimerEvent: {}
+[41.580402] (-) TimerEvent: {}
+[41.681052] (-) TimerEvent: {}
+[41.781680] (-) TimerEvent: {}
+[41.882330] (-) TimerEvent: {}
+[41.983004] (-) TimerEvent: {}
+[42.083726] (-) TimerEvent: {}
+[42.184364] (-) TimerEvent: {}
+[42.284986] (-) TimerEvent: {}
+[42.385634] (-) TimerEvent: {}
+[42.486301] (-) TimerEvent: {}
+[42.586963] (-) TimerEvent: {}
+[42.687652] (-) TimerEvent: {}
+[42.788292] (-) TimerEvent: {}
+[42.888946] (-) TimerEvent: {}
+[42.989657] (-) TimerEvent: {}
+[43.090370] (-) TimerEvent: {}
+[43.190916] (-) TimerEvent: {}
+[43.291483] (-) TimerEvent: {}
+[43.392154] (-) TimerEvent: {}
+[43.492852] (-) TimerEvent: {}
+[43.593513] (-) TimerEvent: {}
+[43.694129] (-) TimerEvent: {}
+[43.794805] (-) TimerEvent: {}
+[43.895464] (-) TimerEvent: {}
+[43.996147] (-) TimerEvent: {}
+[44.096790] (-) TimerEvent: {}
+[44.197401] (-) TimerEvent: {}
+[44.298003] (-) TimerEvent: {}
+[44.398694] (-) TimerEvent: {}
+[44.499397] (-) TimerEvent: {}
+[44.600049] (-) TimerEvent: {}
+[44.700686] (-) TimerEvent: {}
+[44.801316] (-) TimerEvent: {}
+[44.901975] (-) TimerEvent: {}
+[45.002668] (-) TimerEvent: {}
+[45.103343] (-) TimerEvent: {}
+[45.203977] (-) TimerEvent: {}
+[45.304595] (-) TimerEvent: {}
+[45.405249] (-) TimerEvent: {}
+[45.505929] (-) TimerEvent: {}
+[45.606591] (-) TimerEvent: {}
+[45.707291] (-) TimerEvent: {}
+[45.807952] (-) TimerEvent: {}
+[45.908615] (-) TimerEvent: {}
+[46.009301] (-) TimerEvent: {}
+[46.109986] (-) TimerEvent: {}
+[46.210657] (-) TimerEvent: {}
+[46.311351] (-) TimerEvent: {}
+[46.412024] (-) TimerEvent: {}
+[46.512713] (-) TimerEvent: {}
+[46.613412] (-) TimerEvent: {}
+[46.714081] (-) TimerEvent: {}
+[46.814752] (-) TimerEvent: {}
+[46.915477] (-) TimerEvent: {}
+[47.016160] (-) TimerEvent: {}
+[47.116838] (-) TimerEvent: {}
+[47.123415] (slam_gmapping) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking CXX executable slam_gmapping\x1b[0m\n'}
+[47.217010] (-) TimerEvent: {}
+[47.317671] (-) TimerEvent: {}
+[47.418322] (-) TimerEvent: {}
+[47.519064] (-) TimerEvent: {}
+[47.619830] (-) TimerEvent: {}
+[47.720537] (-) TimerEvent: {}
+[47.821254] (-) TimerEvent: {}
+[47.922002] (-) TimerEvent: {}
+[48.022705] (-) TimerEvent: {}
+[48.123503] (-) TimerEvent: {}
+[48.224206] (-) TimerEvent: {}
+[48.324913] (-) TimerEvent: {}
+[48.425659] (-) TimerEvent: {}
+[48.526343] (-) TimerEvent: {}
+[48.627070] (-) TimerEvent: {}
+[48.727804] (-) TimerEvent: {}
+[48.828517] (-) TimerEvent: {}
+[48.929223] (-) TimerEvent: {}
+[49.029924] (-) TimerEvent: {}
+[49.130582] (-) TimerEvent: {}
+[49.231224] (-) TimerEvent: {}
+[49.331850] (-) TimerEvent: {}
+[49.432506] (-) TimerEvent: {}
+[49.533207] (-) TimerEvent: {}
+[49.633897] (-) TimerEvent: {}
+[49.734560] (-) TimerEvent: {}
+[49.835165] (-) TimerEvent: {}
+[49.935820] (-) TimerEvent: {}
+[50.036516] (-) TimerEvent: {}
+[50.064022] (slam_gmapping) StdoutLine: {'line': b'[100%] Built target slam_gmapping\n'}
+[50.092746] (slam_gmapping) CommandEnded: {'returncode': 0}
+[50.095631] (slam_gmapping) JobProgress: {'identifier': 'slam_gmapping', 'progress': 'install'}
+[50.118478] (slam_gmapping) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/davinci-mini/racecar/build/slam_gmapping'], 'cwd': '/home/davinci-mini/racecar/build/slam_gmapping', 'env': OrderedDict([('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'davinci-mini'), ('SSH_CLIENT', '192.168.5.17 62340 22'), ('XDG_SESSION_TYPE', 'tty'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/home/davinci-mini/racecar/install/serial/lib:/home/davinci-mini/racecar/install/openslam_gmapping/lib:/home/davinci-mini/racecar/install/lslidar_msgs/lib:/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/aarch64-linux-gnu:/opt/ros/humble/lib'), ('MOTD_SHOWN', 'pam'), ('HOME', '/home/davinci-mini'), ('OLDPWD', '/home/davinci-mini'), ('SSH_TTY', '/dev/pts/0'), ('ROS_PYTHON_VERSION', '3'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1001/bus'), ('COLCON_PREFIX_PATH', '/home/davinci-mini/racecar/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'davinci-mini'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('TERM', 'xterm'), ('XDG_SESSION_ID', '4'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/davinci-mini/.local/bin:/opt/ros/humble/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin'), ('XDG_RUNTIME_DIR', '/run/user/1001'), ('DISPLAY', 'localhost:10.0'), ('LANG', 'C.UTF-8'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('AMENT_PREFIX_PATH', '/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/slam_gmapping:/home/davinci-mini/racecar/install/serial:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/racecar_driver:/home/davinci-mini/racecar/install/racecar:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/openslam_gmapping:/home/davinci-mini/racecar/install/odom_tf:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/lslidar_driver:/home/davinci-mini/racecar/install/lslidar_msgs:/home/davinci-mini/racecar/install/lidar_tracking:/home/davinci-mini/racecar/install/hipnuc_imu:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble'), ('SHELL', '/bin/bash'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('PWD', '/home/davinci-mini/racecar/build/slam_gmapping'), ('SSH_CONNECTION', '192.168.5.17 62340 192.168.5.100 22'), ('XDG_DATA_DIRS', '/usr/local/share:/usr/share:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/davinci-mini/racecar/build/two_lap_control:/home/davinci-mini/racecar/install/two_lap_control/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/racecar_twoloop/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages:/home/davinci-mini/racecar/build/python_myself:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/nav2_waypoint_cycle/lib/python3.10/site-packages:/home/davinci-mini/racecar/install/lslidar_msgs/local/lib/python3.10/dist-packages:/home/davinci-mini/racecar/install/encoder/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/davinci-mini/racecar/install/openslam_gmapping:/home/davinci-mini/racecar/install/slam_gmapping:/home/davinci-mini/racecar/install/serial:/home/davinci-mini/racecar/install/racecar_driver:/home/davinci-mini/racecar/install/racecar:/home/davinci-mini/racecar/install/odom_tf:/home/davinci-mini/racecar/install/lslidar_driver:/home/davinci-mini/racecar/install/lslidar_msgs:/home/davinci-mini/racecar/install/lidar_tracking:/home/davinci-mini/racecar/install/hipnuc_imu:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble')]), 'shell': False}
+[50.136625] (-) TimerEvent: {}
+[50.141793] (slam_gmapping) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[50.145675] (slam_gmapping) StdoutLine: {'line': b'-- Execute custom install script\n'}
+[50.148148] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/lib/slam_gmapping/slam_gmapping\n'}
+[50.153095] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/launch/slam_gmapping.launch.py\n'}
+[50.153699] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/launch/slam_gmapping_params.launch.py\n'}
+[50.154240] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/ament_index/resource_index/package_run_dependencies/slam_gmapping\n'}
+[50.155421] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/ament_index/resource_index/parent_prefix_path/slam_gmapping\n'}
+[50.156263] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/environment/ament_prefix_path.sh\n'}
+[50.156750] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/environment/ament_prefix_path.dsv\n'}
+[50.157528] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/environment/path.sh\n'}
+[50.157984] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/environment/path.dsv\n'}
+[50.158718] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/local_setup.bash\n'}
+[50.159474] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/local_setup.sh\n'}
+[50.160192] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/local_setup.zsh\n'}
+[50.160654] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/local_setup.dsv\n'}
+[50.161032] (slam_gmapping) StdoutLine: {'line': b'-- Symlinking: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/package.dsv\n'}
+[50.185842] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/ament_index/resource_index/packages/slam_gmapping\n'}
+[50.186818] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/cmake/slam_gmappingConfig.cmake\n'}
+[50.187463] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/cmake/slam_gmappingConfig-version.cmake\n'}
+[50.187979] (slam_gmapping) StdoutLine: {'line': b'-- Up-to-date symlink: /home/davinci-mini/racecar/install/slam_gmapping/share/slam_gmapping/package.xml\n'}
+[50.192804] (slam_gmapping) CommandEnded: {'returncode': 0}
+[50.236730] (-) TimerEvent: {}
+[50.266398] (slam_gmapping) JobEnded: {'identifier': 'slam_gmapping', 'rc': 0}
+[50.269298] (-) EventReactorShutdown: {}

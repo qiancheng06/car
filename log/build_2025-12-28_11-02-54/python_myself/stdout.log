@@ -1,0 +1,21 @@
+running develop
+running egg_info
+writing python_myself.egg-info/PKG-INFO
+writing dependency_links to python_myself.egg-info/dependency_links.txt
+writing entry points to python_myself.egg-info/entry_points.txt
+writing requirements to python_myself.egg-info/requires.txt
+writing top-level names to python_myself.egg-info/top_level.txt
+reading manifest file 'python_myself.egg-info/SOURCES.txt'
+writing manifest file 'python_myself.egg-info/SOURCES.txt'
+running build_ext
+Creating /home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages/python-myself.egg-link (link to .)
+Installing drive script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node1 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node2a script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node2b script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node2c script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node2d script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+Installing node3 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+
+Installed /home/davinci-mini/racecar/build/python_myself
+running symlink_data

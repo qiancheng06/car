@@ -1,0 +1,1 @@
+/home/davinci-mini/racecar/src/racecar/racecar/scripts/detct copy.py

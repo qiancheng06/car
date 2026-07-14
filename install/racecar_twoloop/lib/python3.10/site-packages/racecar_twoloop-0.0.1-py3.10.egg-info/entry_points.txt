@@ -1,0 +1,4 @@
+[console_scripts]
+car_test = racecar_twoloop.car_test:main
+cv_follow_node = racecar_twoloop.cv_follow_node:main
+

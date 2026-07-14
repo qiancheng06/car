@@ -1,0 +1,97 @@
+[0.029s] Invoking command in '/home/davinci-mini/racecar/build/racecar': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble /usr/bin/cmake --build /home/davinci-mini/racecar/build/racecar -- -j3 -l3
+[0.193s] [ 15%] Built target car_controller_new
+[0.271s] [ 30%] Built target my_car_control_new
+[0.348s] [ 46%] Built target scan_node
+[0.497s] [ 61%] Built target car_control_all
+[0.572s] [ 84%] Built target car_test
+[0.642s] [ 84%] Built target ament_cmake_python_symlink_racecar
+[0.716s] [100%] Built target laser_2d_new
+[1.700s] running egg_info
+[1.703s] writing racecar.egg-info/PKG-INFO
+[1.703s] writing dependency_links to racecar.egg-info/dependency_links.txt
+[1.704s] writing top-level names to racecar.egg-info/top_level.txt
+[1.713s] reading manifest file 'racecar.egg-info/SOURCES.txt'
+[1.715s] writing manifest file 'racecar.egg-info/SOURCES.txt'
+[1.829s] [100%] Built target ament_cmake_python_build_racecar_egg
+[1.875s] Invoked command in '/home/davinci-mini/racecar/build/racecar' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble /usr/bin/cmake --build /home/davinci-mini/racecar/build/racecar -- -j3 -l3
+[1.925s] Invoking command in '/home/davinci-mini/racecar/build/racecar': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble /usr/bin/cmake --install /home/davinci-mini/racecar/build/racecar
+[1.967s] -- Install configuration: ""
+[1.971s] -- Execute custom install script
+[1.972s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/car_controller_new
+[1.973s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/laser_2d_new
+[1.973s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/my_car_control_new
+[1.974s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/scan_node
+[1.974s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/car_control_all
+[1.974s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/car_test
+[1.975s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/pythonpath.sh
+[1.975s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/pythonpath.dsv
+[1.976s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar-0.0.0-py3.10.egg-info/PKG-INFO
+[1.977s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar-0.0.0-py3.10.egg-info/SOURCES.txt
+[1.977s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar-0.0.0-py3.10.egg-info/dependency_links.txt
+[1.978s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar-0.0.0-py3.10.egg-info/top_level.txt
+[1.978s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/__init__.py
+[1.979s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/module_to_import.py
+[1.979s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/racecar_teleop.py
+[1.980s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/get.py
+[1.980s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/detct.py
+[1.981s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/go.py
+[1.981s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/line_follow.py
+[1.982s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/line_follow2.py
+[1.982s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/zhuitong.py
+[1.982s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/bus_control.py
+[1.983s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/cv_follow_node.py
+[1.983s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/lib/racecar/odom_key_debug.py
+[1.984s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/camera/camera_info.yaml
+[1.984s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/camera/params_1.yaml
+[1.985s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/camera/params_2.yaml
+[1.985s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/ekf.yaml
+[1.985s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/ekf_carto.yaml
+[1.986s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/laser_box/x4_laser_filter.yaml
+[1.986s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/config/nav.yaml
+[1.987s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/maps/ceshi1.pgm
+[1.987s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/maps/ceshi1.yaml
+[1.988s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/Run_car.launch.py
+[1.988s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/Run_car_one.launch.py
+[1.989s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/Run_nav.launch.py
+[1.989s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/bringup_launch.py
+[1.989s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/camer.launch.py
+[1.990s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/car_go.launch.py
+[1.990s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/ekf.launch.py
+[1.990s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/launch/xunxian.launch.py
+[1.991s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/ament_index/resource_index/package_run_dependencies/racecar
+[1.991s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/ament_index/resource_index/parent_prefix_path/racecar
+[1.991s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/ament_prefix_path.sh
+[1.992s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/ament_prefix_path.dsv
+[1.992s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/path.sh
+[1.993s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/environment/path.dsv
+[1.993s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/local_setup.bash
+[1.994s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/local_setup.sh
+[1.994s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/local_setup.zsh
+[1.995s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/local_setup.dsv
+[1.995s] -- Symlinking: /home/davinci-mini/racecar/install/racecar/share/racecar/package.dsv
+[2.019s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/ament_index/resource_index/packages/racecar
+[2.019s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/cmake/racecarConfig.cmake
+[2.019s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/cmake/racecarConfig-version.cmake
+[2.020s] -- Up-to-date symlink: /home/davinci-mini/racecar/install/racecar/share/racecar/package.xml
+[2.147s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar'...
+[2.147s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/config'...
+[2.147s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/config/camera'...
+[2.148s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/config/laser_box'...
+[2.148s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/include'...
+[2.148s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/include/racecar'...
+[2.148s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/launch'...
+[2.148s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/map'...
+[2.149s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/maps'...
+[2.149s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/racecar'...
+[2.149s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/rviz'...
+[2.150s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts'...
+[2.150s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/build'...
+[2.150s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/install'...
+[2.150s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log'...
+[2.151s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log/build_2025-03-02_17-14-47'...
+[2.151s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log/build_2025-03-02_17-17-54'...
+[2.151s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log/build_2025-03-02_17-18-25'...
+[2.151s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log/latest'...
+[2.151s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/scripts/log/latest_build'...
+[2.152s] Listing '/home/davinci-mini/racecar/install/racecar/local/lib/python3.10/dist-packages/racecar/src'...
+[2.172s] Invoked command in '/home/davinci-mini/racecar/build/racecar' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/davinci-mini/racecar/install/two_lap_control:/home/davinci-mini/racecar/install/racecar_twoloop:/home/davinci-mini/racecar/install/python_myself:/home/davinci-mini/racecar/install/nav2_waypoint_cycle:/home/davinci-mini/racecar/install/encoder:/opt/ros/humble /usr/bin/cmake --install /home/davinci-mini/racecar/build/racecar

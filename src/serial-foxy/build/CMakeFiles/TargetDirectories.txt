@@ -1,0 +1,10 @@
+/home/racecar/src/serial-foxy/build/CMakeFiles/uninstall.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/serial_uninstall.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/serial.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/test.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/edit_cache.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/rebuild_cache.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/list_install_components.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/install.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/install/local.dir
+/home/racecar/src/serial-foxy/build/CMakeFiles/install/strip.dir

@@ -1,0 +1,9 @@
+[console_scripts]
+drive = python_myself.drive:main
+node1 = python_myself.node1:main
+node2a = python_myself.node2a:main
+node2b = python_myself.node2b:main
+node2c = python_myself.node2c:main
+node2d = python_myself.node2d:main
+node3 = python_myself.node3:main
+

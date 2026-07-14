@@ -1,0 +1,20 @@
+[2.270s] Invoking command in '/home/davinci-mini/racecar/build/python_myself': PYTHONPATH=/home/davinci-mini/racecar/build/python_myself/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/davinci-mini/racecar/build/python_myself/build --no-deps symlink_data
+[3.233s] running develop
+[3.837s] running egg_info
+[3.837s] writing python_myself.egg-info/PKG-INFO
+[3.838s] writing dependency_links to python_myself.egg-info/dependency_links.txt
+[3.839s] writing entry points to python_myself.egg-info/entry_points.txt
+[3.839s] writing requirements to python_myself.egg-info/requires.txt
+[3.840s] writing top-level names to python_myself.egg-info/top_level.txt
+[3.846s] reading manifest file 'python_myself.egg-info/SOURCES.txt'
+[3.849s] writing manifest file 'python_myself.egg-info/SOURCES.txt'
+[3.854s] running build_ext
+[3.855s] Creating /home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages/python-myself.egg-link (link to .)
+[3.858s] Installing drive script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[3.859s] Installing node1 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[3.859s] Installing node2 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[3.860s] Installing node3 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[3.860s] 
+[3.861s] Installed /home/davinci-mini/racecar/build/python_myself
+[3.861s] running symlink_data
+[3.997s] Invoked command in '/home/davinci-mini/racecar/build/python_myself' returned '0': PYTHONPATH=/home/davinci-mini/racecar/build/python_myself/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/davinci-mini/racecar/build/python_myself/build --no-deps symlink_data

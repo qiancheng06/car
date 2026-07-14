@@ -1,0 +1,8 @@
+source;share/racecar/hook/cmake_prefix_path.ps1
+source;share/racecar/hook/cmake_prefix_path.dsv
+source;share/racecar/hook/cmake_prefix_path.sh
+source;share/racecar/local_setup.bash
+source;share/racecar/local_setup.dsv
+source;share/racecar/local_setup.ps1
+source;share/racecar/local_setup.sh
+source;share/racecar/local_setup.zsh

@@ -1,0 +1,33 @@
+[2.449s] Invoking command in '/home/davinci-mini/racecar/build/python_myself': PYTHONPATH=/home/davinci-mini/racecar/build/python_myself/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/davinci-mini/racecar/build/python_myself/build --no-deps symlink_data
+[3.460s] running develop
+[4.083s] running egg_info
+[4.083s] creating python_myself.egg-info
+[4.084s] writing python_myself.egg-info/PKG-INFO
+[4.085s] writing dependency_links to python_myself.egg-info/dependency_links.txt
+[4.085s] writing entry points to python_myself.egg-info/entry_points.txt
+[4.085s] writing requirements to python_myself.egg-info/requires.txt
+[4.086s] writing top-level names to python_myself.egg-info/top_level.txt
+[4.086s] writing manifest file 'python_myself.egg-info/SOURCES.txt'
+[4.092s] reading manifest file 'python_myself.egg-info/SOURCES.txt'
+[4.094s] writing manifest file 'python_myself.egg-info/SOURCES.txt'
+[4.100s] running build_ext
+[4.101s] Creating /home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages/python-myself.egg-link (link to .)
+[4.104s] Installing drive script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[4.104s] Installing node1 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[4.105s] Installing node2 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[4.105s] Installing node3 script to /home/davinci-mini/racecar/install/python_myself/lib/python_myself
+[4.106s] 
+[4.106s] Installed /home/davinci-mini/racecar/build/python_myself
+[4.106s] running symlink_data
+[4.106s] creating /home/davinci-mini/racecar/install/python_myself/share/ament_index
+[4.107s] creating /home/davinci-mini/racecar/install/python_myself/share/ament_index/resource_index
+[4.107s] creating /home/davinci-mini/racecar/install/python_myself/share/ament_index/resource_index/packages
+[4.107s] symbolically linking /home/davinci-mini/racecar/build/python_myself/resource/python_myself -> /home/davinci-mini/racecar/install/python_myself/share/ament_index/resource_index/packages
+[4.108s] symbolically linking /home/davinci-mini/racecar/build/python_myself/package.xml -> /home/davinci-mini/racecar/install/python_myself/share/python_myself
+[4.108s] creating /home/davinci-mini/racecar/install/python_myself/share/python_myself/launch
+[4.108s] symbolically linking /home/davinci-mini/racecar/build/python_myself/launch/node3.launch.py -> /home/davinci-mini/racecar/install/python_myself/share/python_myself/launch
+[4.109s] symbolically linking /home/davinci-mini/racecar/build/python_myself/launch/node1.launch.py -> /home/davinci-mini/racecar/install/python_myself/share/python_myself/launch
+[4.109s] symbolically linking /home/davinci-mini/racecar/build/python_myself/launch/node2.launch.py -> /home/davinci-mini/racecar/install/python_myself/share/python_myself/launch
+[4.109s] creating /home/davinci-mini/racecar/install/python_myself/share/python_myself/rviz
+[4.109s] creating /home/davinci-mini/racecar/install/python_myself/share/python_myself/params
+[4.246s] Invoked command in '/home/davinci-mini/racecar/build/python_myself' returned '0': PYTHONPATH=/home/davinci-mini/racecar/build/python_myself/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/davinci-mini/racecar/install/python_myself/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py develop --editable --build-directory /home/davinci-mini/racecar/build/python_myself/build --no-deps symlink_data

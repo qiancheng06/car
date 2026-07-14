@@ -1,0 +1,1 @@
+/home/davinci-mini/racecar/src/racecar/scripts/goal_l.py

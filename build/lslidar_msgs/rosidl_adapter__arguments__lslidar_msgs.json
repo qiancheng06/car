@@ -1,0 +1,10 @@
+{
+  "package_name": "lslidar_msgs",
+  "non_idl_tuples": [
+    "/home/davinci-mini/racecar/src/lslidar_msgs:msg/LslidarDifop.msg",
+    "/home/davinci-mini/racecar/src/lslidar_msgs:msg/LslidarPacket.msg",
+    "/home/davinci-mini/racecar/src/lslidar_msgs:msg/LslidarPoint.msg",
+    "/home/davinci-mini/racecar/src/lslidar_msgs:msg/LslidarScan.msg",
+    "/home/davinci-mini/racecar/src/lslidar_msgs:msg/LslidarSweep.msg"
+  ]
+}

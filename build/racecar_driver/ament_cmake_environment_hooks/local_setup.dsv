@@ -1,0 +1,2 @@
+source;share/racecar_driver/environment/ament_prefix_path.sh
+source;share/racecar_driver/environment/path.sh

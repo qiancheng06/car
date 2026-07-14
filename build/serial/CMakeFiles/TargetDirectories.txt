@@ -1,0 +1,10 @@
+/home/davinci-mini/racecar/build/serial/CMakeFiles/uninstall.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/serial_uninstall.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/serial.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/test.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/edit_cache.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/rebuild_cache.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/list_install_components.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/install.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/install/local.dir
+/home/davinci-mini/racecar/build/serial/CMakeFiles/install/strip.dir

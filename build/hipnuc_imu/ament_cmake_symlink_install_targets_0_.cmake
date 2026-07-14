@@ -1,0 +1,1 @@
+ament_cmake_symlink_install_targets("TARGET_FILES" "/home/davinci-mini/racecar/build/hipnuc_imu/talker" "/home/davinci-mini/racecar/build/hipnuc_imu/listener" "/home/davinci-mini/racecar/build/hipnuc_imu/imu_filter_node" "TARGETS" "talker" "listener" "imu_filter_node" "DESTINATION" "lib/hipnuc_imu")
