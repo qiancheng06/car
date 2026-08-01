@@ -59,6 +59,8 @@ setsid ros2 run racecar_driver racecar_driver_node --ros-args \
   -p enable_legacy_normalized_input:=false \
   -p min_throttle_pwm:=1350.0 \
   -p max_throttle_pwm:=1650.0 \
+  -p min_steering_pwm:=1150.0 \
+  -p max_steering_pwm:=1850.0 \
   8>&- \
   >/tmp/keyboard_drive_driver.log 2>&1 &
 driver_pid=$!
