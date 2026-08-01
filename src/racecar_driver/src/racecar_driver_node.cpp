@@ -3,15 +3,20 @@
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "std_msgs/msg/bool.hpp"
-#include "../include/racecar_driver.h"
 
+#include <array>
+#include <cerrno>
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <fcntl.h>
 #include <functional>
+#include <poll.h>
 #include <stdexcept>
 #include <string>
-#include <vector>
+#include <sys/ioctl.h>
+#include <termios.h>
+#include <unistd.h>
 
 using namespace std::chrono_literals;
 
@@ -75,16 +80,18 @@ public:
 
     validateParameters();
 
-    std::vector<char> serial_port_buffer(serial_port_.begin(), serial_port_.end());
-    serial_port_buffer.push_back('\0');
-    const int init_result = art_racecar_init(baud_rate_, serial_port_buffer.data());
-    if (init_result < 0) {
-      throw std::runtime_error("Unable to initialize racecar serial port " + serial_port_);
-    }
+    initializeSerial();
 
-    // Stop before accepting any ROS command.
+    // Stop before accepting any ROS command.  Do not advertise a usable
+    // driver unless at least one complete neutral frame reached the kernel.
+    bool neutral_written = false;
     for (int i = 0; i < 3; ++i) {
-      stopNow();
+      neutral_written = stopNow() || neutral_written;
+    }
+    if (!neutral_written) {
+      ::close(serial_fd_);
+      serial_fd_ = -1;
+      throw std::runtime_error("Unable to send the initial neutral chassis command");
     }
 
     arm_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
@@ -125,6 +132,10 @@ public:
   {
     for (int i = 0; i < 3; ++i) {
       stopNow();
+    }
+    if (serial_fd_ >= 0) {
+      ::close(serial_fd_);
+      serial_fd_ = -1;
     }
   }
 
@@ -167,9 +178,118 @@ private:
     }
   }
 
-  void stopNow() const
+  static speed_t baudConstant(int baud_rate)
   {
-    (void)send_cmd(
+    switch (baud_rate) {
+      case 9600: return B9600;
+      case 19200: return B19200;
+      case 38400: return B38400;
+      case 57600: return B57600;
+      case 115200: return B115200;
+      default: throw std::invalid_argument("Unsupported serial baud rate");
+    }
+  }
+
+  void initializeSerial()
+  {
+    // Validate before opening so an unsupported value cannot leak the fd if
+    // baudConstant() throws while this object is still being constructed.
+    const speed_t speed = baudConstant(baud_rate_);
+    serial_fd_ = ::open(serial_port_.c_str(), O_RDWR | O_NOCTTY | O_NONBLOCK);
+    if (serial_fd_ < 0) {
+      throw std::runtime_error(
+              "Unable to open " + serial_port_ + ": " + std::strerror(errno));
+    }
+    if (::ioctl(serial_fd_, TIOCEXCL) != 0) {
+      const std::string error = std::strerror(errno);
+      ::close(serial_fd_);
+      serial_fd_ = -1;
+      throw std::runtime_error(
+              "Unable to claim exclusive access to " + serial_port_ + ": " + error);
+    }
+
+    struct termios config {};
+    if (::tcgetattr(serial_fd_, &config) != 0) {
+      const std::string error = std::strerror(errno);
+      ::close(serial_fd_);
+      serial_fd_ = -1;
+      throw std::runtime_error("tcgetattr failed for " + serial_port_ + ": " + error);
+    }
+
+    ::cfmakeraw(&config);
+    ::cfsetispeed(&config, speed);
+    ::cfsetospeed(&config, speed);
+    config.c_cflag |= static_cast<tcflag_t>(CLOCAL | CREAD);
+    config.c_cflag &= static_cast<tcflag_t>(~(PARENB | CSTOPB | CRTSCTS | CSIZE));
+    config.c_cflag |= CS8;
+    config.c_cc[VMIN] = 0;
+    config.c_cc[VTIME] = 0;
+
+    if (::tcsetattr(serial_fd_, TCSANOW, &config) != 0) {
+      const std::string error = std::strerror(errno);
+      ::close(serial_fd_);
+      serial_fd_ = -1;
+      throw std::runtime_error("tcsetattr failed for " + serial_port_ + ": " + error);
+    }
+    (void)::tcflush(serial_fd_, TCIOFLUSH);
+    RCLCPP_INFO(
+      this->get_logger(), "Opened non-blocking chassis serial port %s at %d baud",
+      serial_port_.c_str(), baud_rate_);
+  }
+
+  bool writePwm(uint16_t motor_pwm, uint16_t steering_pwm)
+  {
+    const uint8_t checksum = static_cast<uint8_t>(
+      (motor_pwm & 0xffU) + ((motor_pwm >> 8U) & 0xffU) +
+      (steering_pwm & 0xffU) + ((steering_pwm >> 8U) & 0xffU));
+    const std::array<uint8_t, 8> frame {{
+      0x00U,
+      0xaaU,
+      static_cast<uint8_t>(motor_pwm & 0xffU),
+      static_cast<uint8_t>((motor_pwm >> 8U) & 0xffU),
+      static_cast<uint8_t>(steering_pwm & 0xffU),
+      static_cast<uint8_t>((steering_pwm >> 8U) & 0xffU),
+      checksum,
+      0x55U,
+    }};
+
+    std::size_t written = 0;
+    for (int attempt = 0; attempt < 5 && written < frame.size(); ++attempt) {
+      const ssize_t result = ::write(
+        serial_fd_, frame.data() + written, frame.size() - written);
+      if (result > 0) {
+        written += static_cast<std::size_t>(result);
+        continue;
+      }
+      if (result < 0 && errno == EINTR) {
+        --attempt;
+        continue;
+      }
+      if (result == 0 ||
+        (result < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)))
+      {
+        struct pollfd descriptor {serial_fd_, POLLOUT, 0};
+        (void)::poll(&descriptor, 1, 20);
+        continue;
+      }
+      RCLCPP_ERROR_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000,
+        "Chassis serial write failed: %s", std::strerror(errno));
+      return false;
+    }
+
+    if (written != frame.size()) {
+      RCLCPP_ERROR_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000,
+        "Chassis serial write timed out (%zu/%zu bytes)", written, frame.size());
+      return false;
+    }
+    return true;
+  }
+
+  bool stopNow()
+  {
+    return writePwm(
       static_cast<uint16_t>(std::lround(neutral_throttle_pwm_)),
       static_cast<uint16_t>(std::lround(neutral_steering_pwm_)));
   }
@@ -177,7 +297,10 @@ private:
   void rejectAndStop(const std::string & reason)
   {
     command_received_ = false;
-    stopNow();
+    if (!stopNow()) {
+      armed_ = false;
+      serial_fault_ = true;
+    }
     RCLCPP_ERROR(this->get_logger(), "Rejected chassis command: %s", reason.c_str());
   }
 
@@ -196,9 +319,22 @@ private:
       return;
     }
 
-    (void)send_cmd(
-      static_cast<uint16_t>(std::lround(throttle_pwm)),
-      static_cast<uint16_t>(std::lround(steering_pwm)));
+    if (!writePwm(
+        static_cast<uint16_t>(std::lround(throttle_pwm)),
+        static_cast<uint16_t>(std::lround(steering_pwm))))
+    {
+      // Never resume automatically after a serial failure.  A fresh explicit
+      // arm request must first prove that a neutral frame can be written.
+      armed_ = false;
+      command_received_ = false;
+      serial_fault_ = true;
+      watchdog_reported_ = false;
+      (void)stopNow();
+      RCLCPP_ERROR(
+        this->get_logger(),
+        "Chassis serial fault latched; a successful explicit re-arm is required");
+      return;
+    }
     last_command_time_ = std::chrono::steady_clock::now();
     command_received_ = true;
     watchdog_reported_ = false;
@@ -211,8 +347,12 @@ private:
 
   bool outputEnabled()
   {
-    if (!armed_ || estop_) {
-      stopNow();
+    if (!armed_ || estop_ || serial_fault_) {
+      if (!stopNow()) {
+        armed_ = false;
+        command_received_ = false;
+        serial_fault_ = true;
+      }
       return false;
     }
     return true;
@@ -257,10 +397,22 @@ private:
       RCLCPP_WARN(this->get_logger(), "Arm request ignored while software stop is active");
       return;
     }
-    armed_ = msg->data;
+
+    // Keep output disabled while proving that the serial path accepts neutral.
+    armed_ = false;
     command_received_ = false;
     watchdog_reported_ = false;
-    stopNow();
+
+    if (!stopNow()) {
+      serial_fault_ = true;
+      RCLCPP_ERROR(this->get_logger(), "Arm request rejected: neutral serial write failed");
+      return;
+    }
+
+    if (msg->data) {
+      serial_fault_ = false;
+      armed_ = true;
+    }
     RCLCPP_INFO(this->get_logger(), "Driver output %s", armed_ ? "ARMED" : "DISARMED");
   }
 
@@ -270,7 +422,9 @@ private:
     armed_ = false;
     command_received_ = false;
     watchdog_reported_ = false;
-    stopNow();
+    if (!stopNow()) {
+      serial_fault_ = true;
+    }
     if (estop_) {
       RCLCPP_ERROR(this->get_logger(), "SOFTWARE STOP asserted; driver is disarmed");
     } else {
@@ -284,9 +438,13 @@ private:
     const double age = std::chrono::duration<double>(now - last_command_time_).count();
     const bool stale = !command_received_ || age > command_timeout_s_;
 
-    if (!armed_ || estop_ || stale) {
+    if (!armed_ || estop_ || serial_fault_ || stale) {
       // Repeat neutral at 20 Hz; one lost serial frame must not leave stale throttle active.
-      stopNow();
+      if (!stopNow()) {
+        armed_ = false;
+        command_received_ = false;
+        serial_fault_ = true;
+      }
       if (armed_ && !estop_ && stale && !watchdog_reported_) {
         RCLCPP_WARN(
           this->get_logger(),
@@ -308,6 +466,7 @@ private:
   std::string arm_topic_;
   std::string estop_topic_;
   int baud_rate_{38400};
+  int serial_fd_{-1};
   double command_timeout_s_{0.50};
   double neutral_throttle_pwm_{1500.0};
   double min_throttle_pwm_{1500.0};
@@ -327,6 +486,7 @@ private:
   bool enable_legacy_normalized_input_{false};
   bool command_received_{false};
   bool watchdog_reported_{false};
+  bool serial_fault_{false};
 };
 
 int main(int argc, char ** argv)

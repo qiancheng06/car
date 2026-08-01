@@ -32,10 +32,6 @@ ament_target_dependencies(${PROJECT_NAME}_node_one
   geometry_msgs
 )
 
-target_link_libraries(${PROJECT_NAME}_node
-  ${PROJECT_SOURCE_DIR}/lib/libracecar_driver.a
-)
-
 target_link_libraries(${PROJECT_NAME}_node_one
   ${PROJECT_SOURCE_DIR}/lib/libracecar_driver.a
 )
