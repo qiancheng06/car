@@ -19,7 +19,7 @@ from std_msgs.msg import Bool
 
 NEUTRAL_PWM = 1500.0
 DEFAULT_STEERING_CENTER_DEG = 90.0
-DEFAULT_TURN_DELTA_DEG = 20.0
+DEFAULT_TURN_DELTA_DEG = 30.0
 DEFAULT_FORWARD_POWER = 55
 DEFAULT_REVERSE_POWER = 70
 MIN_STEERING_CENTER_DEG = 80.0
@@ -122,6 +122,20 @@ class KeyboardDrive(Node):
         turn_delta = bounded_number(
             "turn_delta_deg", MIN_TURN_DELTA_DEG, max_turn_delta
         )
+        turn_delta_override = os.environ.get("RACECAR_TURN_DELTA_DEG")
+        if turn_delta_override is not None:
+            try:
+                override_value = float(turn_delta_override)
+                if not math.isfinite(override_value):
+                    raise ValueError("turn delta must be finite")
+                turn_delta = clamp(
+                    override_value, MIN_TURN_DELTA_DEG, max_turn_delta
+                )
+            except ValueError as error:
+                self.get_logger().warning(
+                    "Ignoring invalid RACECAR_TURN_DELTA_DEG=%r: %s"
+                    % (turn_delta_override, error)
+                )
         try:
             direction = -1 if float(loaded.get("steering_direction", 1)) < 0 else 1
         except (TypeError, ValueError):

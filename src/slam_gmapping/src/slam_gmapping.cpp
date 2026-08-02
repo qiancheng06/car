@@ -25,6 +25,10 @@
 
 #include "tf2_ros/create_timer_ros.h"
 
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+
 #define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
 
 using std::placeholders::_1;
@@ -96,6 +100,62 @@ void SlamGmapping::init() {
     lasamplerange_ = 0.005;
     lasamplestep_ = 0.005;
     tf_delay_ = transform_publish_period_;
+
+    throttle_scans_ = this->declare_parameter<int>("throttle_scans", throttle_scans_);
+    base_frame_ = this->declare_parameter<std::string>("base_frame", base_frame_);
+    map_frame_ = this->declare_parameter<std::string>("map_frame", map_frame_);
+    odom_frame_ = this->declare_parameter<std::string>("odom_frame", odom_frame_);
+    transform_publish_period_ = this->declare_parameter<double>(
+        "transform_publish_period", transform_publish_period_);
+    const double map_update_interval = this->declare_parameter<double>(
+        "map_update_interval", 0.5);
+    tf_delay_ = this->declare_parameter<double>("tf_delay", transform_publish_period_);
+    maxUrange_ = this->declare_parameter<double>("maxUrange", maxUrange_);
+    maxRange_ = this->declare_parameter<double>("maxRange", maxRange_);
+    minimum_score_ = this->declare_parameter<double>("minimum_score", minimum_score_);
+    sigma_ = this->declare_parameter<double>("sigma", sigma_);
+    kernelSize_ = this->declare_parameter<int>("kernelSize", kernelSize_);
+    lstep_ = this->declare_parameter<double>("lstep", lstep_);
+    astep_ = this->declare_parameter<double>("astep", astep_);
+    iterations_ = this->declare_parameter<int>("iterations", iterations_);
+    lsigma_ = this->declare_parameter<double>("lsigma", lsigma_);
+    ogain_ = this->declare_parameter<double>("ogain", ogain_);
+    lskip_ = this->declare_parameter<int>("lskip", lskip_);
+    srr_ = this->declare_parameter<double>("srr", srr_);
+    srt_ = this->declare_parameter<double>("srt", srt_);
+    str_ = this->declare_parameter<double>("str", str_);
+    stt_ = this->declare_parameter<double>("stt", stt_);
+    linearUpdate_ = this->declare_parameter<double>("linearUpdate", linearUpdate_);
+    angularUpdate_ = this->declare_parameter<double>("angularUpdate", angularUpdate_);
+    temporalUpdate_ = this->declare_parameter<double>("temporalUpdate", temporalUpdate_);
+    resampleThreshold_ = this->declare_parameter<double>(
+        "resampleThreshold", resampleThreshold_);
+    particles_ = this->declare_parameter<int>("particles", particles_);
+    xmin_ = this->declare_parameter<double>("xmin", xmin_);
+    ymin_ = this->declare_parameter<double>("ymin", ymin_);
+    xmax_ = this->declare_parameter<double>("xmax", xmax_);
+    ymax_ = this->declare_parameter<double>("ymax", ymax_);
+    delta_ = this->declare_parameter<double>("delta", delta_);
+    occ_thresh_ = this->declare_parameter<double>("occ_thresh", occ_thresh_);
+    llsamplerange_ = this->declare_parameter<double>("llsamplerange", llsamplerange_);
+    llsamplestep_ = this->declare_parameter<double>("llsamplestep", llsamplestep_);
+    lasamplerange_ = this->declare_parameter<double>("lasamplerange", lasamplerange_);
+    lasamplestep_ = this->declare_parameter<double>("lasamplestep", lasamplestep_);
+
+    if (throttle_scans_ < 1 || transform_publish_period_ <= 0.0 ||
+        map_update_interval <= 0.0 || maxRange_ <= 0.0 || maxUrange_ <= 0.0 ||
+        maxUrange_ > maxRange_ || particles_ < 1 || delta_ <= 0.0 ||
+        xmin_ >= xmax_ || ymin_ >= ymax_)
+    {
+        throw std::invalid_argument("Invalid slam_gmapping parameter set");
+    }
+    map_update_interval_ = tf2::durationFromSec(map_update_interval);
+
+    RCLCPP_INFO(
+        this->get_logger(),
+        "GMapping parameters: base=%s odom=%s range=%.1f/%.1f m particles=%d map=[%.1f,%.1f]x[%.1f,%.1f]",
+        base_frame_.c_str(), odom_frame_.c_str(), maxUrange_, maxRange_, particles_,
+        xmin_, xmax_, ymin_, ymax_);
 }
 
 void SlamGmapping::startLiveSlam() {
@@ -250,9 +310,13 @@ bool SlamGmapping::initMapper(const sensor_msgs::msg::LaserScan::ConstSharedPtr 
 
     GMapping::OrientedPoint gmap_pose(0, 0, 0);
 
-    // setting maxRange and maxUrange here so we can set a reasonable default
-    maxRange_ = scan->range_max - 0.01;
-    maxUrange_ = maxRange_;
+    // Some M10 firmware reports a nominal 200 m range.  Respect the configured
+    // reliable range and only clamp it downward when the sensor reports less.
+    const double reported_max_range = scan->range_max - 0.01;
+    if (std::isfinite(reported_max_range) && reported_max_range > 0.0) {
+        maxRange_ = std::min(maxRange_, reported_max_range);
+    }
+    maxUrange_ = std::min(maxUrange_, maxRange_);
 
     // The laser must be called "FLASER".
     // We pass in the absolute value of the computed angle increment, on the

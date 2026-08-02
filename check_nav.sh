@@ -26,7 +26,8 @@ config = Path("src/racecar/config/nav_astar_teb.yaml")
 data = yaml.safe_load(config.read_text(encoding="utf-8"))
 planner = data["planner_server"]["ros__parameters"]["GridBased"]["plugin"]
 controller = data["controller_server"]["ros__parameters"]["FollowPath"]["plugin"]
-assert planner == "nav2_smac_planner/SmacPlannerHybrid", planner
+assert planner == "nav2_navfn_planner/NavfnPlanner", planner
+assert data["planner_server"]["ros__parameters"]["GridBased"]["use_astar"] is True
 assert controller == "teb_local_planner::TebLocalPlannerROS", controller
 adapter = data["nav_cmd_adapter"]["ros__parameters"]
 assert adapter["output_topic"] == "/racecar_driver/cmd_pwm"
@@ -44,7 +45,7 @@ required_links = {
     "caster_front_link", "caster_back_link",
 }
 assert required_links <= links, required_links - links
-print("YAML OK: Hybrid-A* + TEB")
+print("YAML OK: A* + TEB")
 PY
 
 if ros2 pkg prefix teb_local_planner >/dev/null 2>&1; then
