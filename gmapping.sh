@@ -103,8 +103,8 @@ if ! node_exists /racecar_driver; then
     enable_legacy_normalized_input:=false \
     min_throttle_pwm:=1350.0 \
     max_throttle_pwm:=1650.0 \
-    min_steering_pwm:=1150.0 \
-    max_steering_pwm:=1850.0 8>&- 9>&- &
+    min_steering_pwm:=1000.0 \
+    max_steering_pwm:=2000.0 8>&- 9>&- &
   PIDS+=("$!")
   CORE_PIDS+=("$!")
   for _ in {1..40}; do
@@ -136,10 +136,10 @@ else
   if grep -qi true <<<"$legacy_all_mode" || \
     ! grep -qi true <<<"$legacy_pwm_mode" || \
     grep -qi true <<<"$legacy_normalized_mode" || \
-    ! grep -Eq '(^|[^0-9])1350(\.0+)?([^0-9]|$)' <<<"$minimum_throttle" || \
-    ! grep -Eq '(^|[^0-9])1650(\.0+)?([^0-9]|$)' <<<"$maximum_throttle" || \
-    ! grep -Eq '(^|[^0-9])1150(\.0+)?([^0-9]|$)' <<<"$minimum_steering" || \
-    ! grep -Eq '(^|[^0-9])1850(\.0+)?([^0-9]|$)' <<<"$maximum_steering"
+    ! grep -Eq '\11000[^0-9])1350(\.0+)?([^0-9]|$)' <<<"$minimum_throttle" || \
+    ! grep -Eq '\11000[^0-9])1650(\.0+)?([^0-9]|$)' <<<"$maximum_throttle" || \
+    ! grep -Eq '(^|[^0-9])1000(\.0+)?([^0-9]|$)' <<<"$minimum_steering" || \
+    ! grep -Eq '(^|[^0-9])2000(\.0+)?([^0-9]|$)' <<<"$maximum_steering"
   then
     echo "ERROR: the running driver is not in PWM-only manual mode." >&2
     echo "Stop it, then run gmapping.sh again so mapping starts the correct driver mode." >&2

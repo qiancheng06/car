@@ -170,6 +170,8 @@ def generate_launch_description():
                     min_steering_pwm, value_type=float),
                 'max_steering_pwm': ParameterValue(
                     max_steering_pwm, value_type=float),
+                'teleop_zero_degree_pwm': 2500.0,
+                'neutral_steering_pwm': 1500.0,
             }],
         ),
     ])
