@@ -3,3 +3,17 @@ src/teb_local_planner_ros2/
 src/costmap_converter_ros2/
 **/__pycache__/
 *.pyc
+
+# Build artifacts
+build/
+install/
+log/
+
+# VSCode
+.vscode/
+
+# Workbuddy
+.workbuddy/
+
+# Git backup
+src/racecar/.git-backup/
