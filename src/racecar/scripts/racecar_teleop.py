@@ -74,7 +74,7 @@ class RacecarTeleop(Node):
         # envelope (roughly 63..117 steering degrees, 1475..1550 throttle).
         self.turn_start_value = 25
         self.speed_mid = 1500
-        self.turn_mid = 90
+        self.turn_mid = 87
         self.speed_bias = 0
         self.turn_bias = 0
         self.speed_add_once = 1

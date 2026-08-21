@@ -49,27 +49,24 @@ set(dependencies
 include_directories(include)
 
 # Create Cpp executable
-add_executable(car_controller_new src/car_controller_new.cpp)
+# add_executable(car_controller_new src/car_controller_new.cpp)
 add_executable(laser_2d_new src/laser_2d_new.cpp)
 add_executable(my_car_control_new src/my_car_control_new.cpp)
 add_executable(scan_node src/scan_node.cpp)
 add_executable(car_control_all src/car_control_all.cpp)
-add_executable(car_test src/car_test.cpp src/control.cpp)
-ament_target_dependencies(car_controller_new ${dependencies})
+# ament_target_dependencies(car_controller_new ${dependencies})
 ament_target_dependencies(laser_2d_new ${dependencies})
 ament_target_dependencies(my_car_control_new ${dependencies})
 ament_target_dependencies(scan_node ${dependencies})
 ament_target_dependencies(car_control_all ${dependencies})
-ament_target_dependencies(car_test ${dependencies})
 
 # Install Cpp executables
 install(TARGETS
-  car_controller_new
+#  car_controller_new
   laser_2d_new
   my_car_control_new
   scan_node
   car_control_all
-  car_test
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -79,7 +76,11 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/racecar_teleop.py
-  scripts/keyboard_drive.py
+  scripts/race_manager.py
+  scripts/parking_sign_detector.py
+  scripts/race_preflight.py
+  scripts/yolo_vision_node.py
+  scripts/npu_vision_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 install(PROGRAMS
@@ -106,16 +107,6 @@ install(PROGRAMS
     scripts/zhuitong.py 
     DESTINATION lib/${PROJECT_NAME}
 )
-install(PROGRAMS
-  scripts/bus_control.py
-  DESTINATION lib/${PROJECT_NAME}
-)
-install(PROGRAMS
-  scripts/cv_follow_node.py
-  scripts/odom_key_debug.py
-  scripts/nav_cmd_adapter.py
-  DESTINATION lib/${PROJECT_NAME}
-)
 install(DIRECTORY
   config
   DESTINATION share/${PROJECT_NAME}
@@ -130,14 +121,6 @@ install(DIRECTORY
 )
 install(DIRECTORY
   launch
-  DESTINATION share/${PROJECT_NAME}
-)
-install(DIRECTORY
-  behavior_trees
-  DESTINATION share/${PROJECT_NAME}
-)
-install(DIRECTORY
-  urdf
   DESTINATION share/${PROJECT_NAME}
 )
 

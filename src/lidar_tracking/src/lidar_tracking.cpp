@@ -315,6 +315,8 @@
  {
      // 正常循迹状态控制逻辑：基准舵角82 + PID输出
      twist.angular.z = 82.5 + angle;                               // 基础转向角度 + PID输出
+     if (twist.angular.z < 63.0) twist.angular.z = 63.0;           // 限幅：对应PWM1200~1800安全包络
+     if (twist.angular.z > 117.0) twist.angular.z = 117.0;
      twist.linear.x = speed;                                     // 使用基础行驶速度
      
      // 大转向角度时减速，提高安全性
@@ -557,6 +559,33 @@
          }
          // 最终误差：加权平均 × 系数（将米转换到舵机角度域的经验系数）
          error = error_sum / rate_sum * 53.33;
+     }
+     else
+     {
+         // 单侧锥桶兜底：以最近锥桶为中心保持 0.75m 安全距离
+         double nearest = 10.0;
+         int side = 0; // 0=无, 1=仅红(右), -1=仅蓝(左)
+         for (int m = 0; m < j; m++)
+         {
+             if (red_p[m].x < nearest)
+             {
+                 nearest = red_p[m].x;
+                 side = 1;
+             }
+         }
+         for (int m = 0; m < k; m++)
+         {
+             double d = -blue_p[m].x;
+             if (d < nearest)
+             {
+                 nearest = d;
+                 side = -1;
+             }
+         }
+         if (side != 0)
+         {
+             error = (0.75 - nearest) * 53.33 * side;
+         }
      }
  
      // ===== PID调节与速度控制 =====

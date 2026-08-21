@@ -1,7 +1,7 @@
-import os
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     # 声明摄像头设备参数
@@ -9,6 +9,7 @@ def generate_launch_description():
         'video_device', default_value='/dev/video0',
         description='Video device path for the USB camera'
     )
+    video_device = LaunchConfiguration('video_device')
 
     # 启动 usb_cam 节点
     usb_cam_node = Node(
@@ -16,11 +17,15 @@ def generate_launch_description():
         executable='usb_cam_node_exe',
         name='usb_cam',
         parameters=[{
-            'video_device': '/dev/video0',  # 默认设备路径
-            'image_width': 320,            # 图像宽度
-            'image_height': 240,           # 图像高度
-            'pixel_format': 'yuyv',        # 修改为 yuyv 格式
-            'camera_frame_id': 'camera'    # 摄像头帧 ID
+            'video_device': video_device,
+            'framerate': 30.0,
+            'io_method': 'mmap',
+            'image_width': 640,
+            'image_height': 480,
+            # The installed Camera DSA advertises MJPEG 640x480@30 FPS.
+            'pixel_format': 'mjpeg2rgb',
+            'av_device_format': 'YUV422P',
+            'frame_id': 'camera_link'
         }],
         output='screen'
     )

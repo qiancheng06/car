@@ -3,7 +3,7 @@
     topic: "teleop_cmd_vel"
 
     # PID
-    speed: 1541
+    speed: 1530
     kp: 1.40
     ki: 0.0
     kd: 1.30
@@ -22,5 +22,5 @@
     max_left_dis: 1.5
 
     # 无锥桶巡航
-    no_cone_speed: 1535
+    no_cone_speed: 1530
     no_cone_turn_angle: 105.0

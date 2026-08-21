@@ -1,0 +1,25 @@
+npu_vision:
+  ros__parameters:
+    image_topic: /image_raw
+    input_size: 640
+    inference_rate_hz: 30.0
+    device_id: 0
+    base_confidence: 0.25
+    iou_threshold: 0.55
+    max_detections: 80
+    parking_confidence: 0.65
+    red_light_confidence: 0.65
+    cone_confidence: 0.45
+    parking_min_area_ratio: 0.0008
+    red_light_min_area_ratio: 0.0003
+    red_light_roi_top_ratio: 0.0
+    red_light_roi_bottom_ratio: 0.80
+    red_window: 5
+    red_min_hits: 3
+    red_clear_frames: 3
+    parking_window: 7
+    parking_min_votes: 4
+    cone_min_color_ratio: 0.02
+    cone_color_dominance: 1.25
+    publish_debug_image: true
+    log_interval_s: 5.0

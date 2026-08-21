@@ -21,15 +21,31 @@ MAP_NAME="${MAP_NAME%.pgm}"
 if [[ "$MAP_NAME" == */* ]]; then
   MAP_OUTPUT="$MAP_NAME"
 else
-  MAP_OUTPUT="$SCRIPT_DIR/src/racecar/map/$MAP_NAME"
+  MAP_OUTPUT="$HOME/racecar_maps/$MAP_NAME"
 fi
 
-if ! ros2 node list 2>/dev/null | grep -qx '/slam_gmapping'; then
+if ! timeout 5 ros2 node list 2>/dev/null | grep -qx '/slam_gmapping'; then
   echo "ERROR: /slam_gmapping is not running. Refusing to overwrite a map." >&2
   exit 1
 fi
-if ! ros2 topic list 2>/dev/null | grep -qx '/map'; then
+MAP_INFO="$(timeout 8 ros2 topic info /map --verbose 2>/dev/null || true)"
+if ! grep -Eq 'Publisher count: [1-9][0-9]*' <<<"$MAP_INFO"; then
   echo "ERROR: gmapping has not published /map yet." >&2
+  exit 1
+fi
+if grep -q 'Durability: TRANSIENT_LOCAL' <<<"$MAP_INFO"; then
+  MAP_DURABILITY="transient_local"
+  MAP_TRANSIENT_LOCAL="true"
+else
+  MAP_DURABILITY="volatile"
+  MAP_TRANSIENT_LOCAL="false"
+fi
+
+if ! timeout 10 ros2 topic echo /map --once \
+  --qos-reliability reliable --qos-durability "$MAP_DURABILITY" \
+  >/dev/null 2>&1
+then
+  echo "ERROR: /map exists but no complete map message arrived within 10 seconds." >&2
   exit 1
 fi
 
@@ -46,7 +62,9 @@ cleanup_temp() {
 trap cleanup_temp EXIT
 
 echo "Saving gmapping output to: $MAP_OUTPUT.yaml and $MAP_OUTPUT.pgm"
-ros2 run nav2_map_server map_saver_cli -f "$TEMP_OUTPUT"
+ros2 run nav2_map_server map_saver_cli -f "$TEMP_OUTPUT" --ros-args \
+  -p map_subscribe_transient_local:="$MAP_TRANSIENT_LOCAL" \
+  -p save_map_timeout:=10.0
 
 if [[ ! -s "$TEMP_OUTPUT.yaml" || ! -s "$TEMP_OUTPUT.pgm" ]]; then
   echo "ERROR: temporary map files were not created correctly." >&2

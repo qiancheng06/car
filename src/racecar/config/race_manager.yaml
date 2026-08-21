@@ -1,0 +1,61 @@
+race_manager:
+  ros__parameters:
+    # Existing lidar_tracking publishes PWM-style Twist commands.
+    input_cmd_topic: /racecar/follow_cmd_vel
+    output_cmd_topic: /teleop_cmd_vel
+    odom_topic: /odom_combined
+    image_topic: /image_raw
+    command_mode: pwm
+
+    # Lap detection. Tune lap_radius_m after checking odometry drift.
+    lap_radius_m: 0.75
+    lap_min_leave_distance_m: 4.0
+    lap1_min_time_s: 20.0
+    lap2_min_time_s: 20.0
+
+    # PWM command limits for the driver teleop path.
+    pwm_stop_speed: 1500.0
+    pwm_neutral_steer: 90.0
+    pwm_lap1_speed: 1538.0
+    pwm_lap2_speed: 1548.0
+    pwm_max_speed: 1565.0
+    pwm_min_steer: 35.0
+    pwm_max_steer: 145.0
+
+    # Vision detection. Keep these conservative; tune on the real red light.
+    enable_vision: true
+    use_external_vision: true
+    red_light_topic: /racecar/red_light_detected
+    red_light_stop_s: 3.2
+    red_light_cooldown_s: 8.0
+    red_light_min_area_ratio: 0.003
+    red_light_min_frames: 3
+    red_light_roi_top_ratio: 0.0
+    red_light_roi_bottom_ratio: 0.70
+
+    # A/B parking. Configure template paths after taking real camera crops.
+    # The standalone parking_sign_detector publishes A/B to /racecar/parking_sign.
+    parking_sign_topic: /racecar/parking_sign
+    parking_sign_min_frames: 3
+    parking_approach_s: 1.0
+    parking_turn_s: 1.5
+    parking_speed_pwm: 1530.0
+    parking_left_steer_pwm: 62.0
+    parking_right_steer_pwm: 118.0
+    template_a_path: ""
+    template_b_path: ""
+
+    save_map_on_lap1_complete: true
+    map_save_path: /home/davinci-mini/racecar/src/racecar/map/competition_map
+
+parking_sign_detector:
+  ros__parameters:
+    image_topic: /image_raw
+    parking_sign_topic: /racecar/parking_sign
+    template_a_path: ""
+    template_b_path: ""
+    score_threshold: 0.45
+    stable_frames: 3
+    roi_top_ratio: 0.0
+    roi_bottom_ratio: 1.0
+    debug_view: false

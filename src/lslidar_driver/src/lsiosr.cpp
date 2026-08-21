@@ -155,7 +155,9 @@ int LSIOSR::read(unsigned char *buffer, int length, int timeout)
       }
       else if (rc < 0)
       {
-        printf("error \n");
+        // EAGAIN(暂无数据)是正常现象,不刷屏;其余才打印
+        if (errno != EAGAIN && errno != EWOULDBLOCK)
+          printf("error \n");
         retry--;
         if (retry <= 0)
         {
