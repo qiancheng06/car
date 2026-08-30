@@ -31,8 +31,6 @@ fi
 
 PIDS=()
 cleanup() {
-  timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-    '{data: false}' >/dev/null 2>&1 || true
   local pid
   for pid in "${PIDS[@]:-}"; do
     if kill -0 "$pid" 2>/dev/null; then
@@ -45,7 +43,7 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "Starting lidar, IMU, encoder, EKF and the DISARMED chassis driver..."
+echo "Starting lidar, IMU, encoder, EKF and the chassis driver..."
 echo "The PWM-style /teleop_cmd_vel input is enabled for low-speed mapping/bench control."
 ros2 launch racecar Run_car.launch.py \
   enable_legacy_pwm_input:=true \
@@ -64,6 +62,4 @@ if ! ros2 node list 2>/dev/null | grep -qx '/racecar_driver'; then
 fi
 flock -u 8
 
-echo "Driver is DISARMED. Arm only after lifting the drive wheels:"
-echo "  ros2 topic pub --once /nav/arm std_msgs/msg/Bool '{data: true}'"
 wait "${PIDS[0]}"

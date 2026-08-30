@@ -96,8 +96,6 @@ cleanup() {
   fi
   cleanup_started=true
   trap - EXIT INT TERM HUP
-  timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-    '{data: false}' >/dev/null 2>&1 || true
   local pid
   for pid in "${PIDS[@]:-}"; do
     if kill -0 "$pid" 2>/dev/null; then
@@ -227,7 +225,7 @@ if ! wait_for_transform odom_combined base_footprint; then
   exit 1
 fi
 
-echo "Starting A*, TEB and the DISARMED command adapter..."
+echo "Starting A*, TEB and the command adapter..."
 if [[ "$HAS_MAP_ARGUMENT" == true ]]; then
   setsid ros2 launch racecar Run_nav.launch.py "$@" 8>&- 9>&- &
 else
@@ -244,10 +242,8 @@ if ! pgrep -f "nav_cmd_adapter" >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Navigation is active but the chassis remains DISARMED."
+echo "Navigation is active."
 echo "Map: $DEFAULT_MAP"
-echo "After checking localization, the A* path, TEB output and steering direction, arm with:"
-echo "  ros2 topic pub --once /nav/arm std_msgs/msg/Bool '{data: true}'"
 echo "Software stop (keep a person at the physical power switch):"
 echo "  ros2 topic pub --once /nav/estop std_msgs/msg/Bool '{data: true}'"
 

@@ -16,14 +16,13 @@ from rclpy.node import Node
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Bool, String
+from std_msgs.msg import Bool
 
 
 class Lap1Driver(Node):
     def __init__(self):
         super().__init__("two_lap_lap1")
         self.cmd_pub = self.create_publisher(Twist, "/teleop_cmd_vel", 10)
-        self.arm_pub = self.create_publisher(Bool, "/nav/arm", 10)
         self.done_pub = self.create_publisher(Bool, "/two_lap/lap1_done", 10)
         self.create_subscription(LaserScan, "/scan", self.on_scan, 10)
         self.create_subscription(Odometry, "/odom_combined", self.on_odom, 10)
@@ -49,7 +48,6 @@ class Lap1Driver(Node):
         self.declare_parameter("plateau_tolerance", 0.3)
         self.declare_parameter("plateau_min", 2)           # 平台稳定点数（放宽：2点即判锥桶）
         self.declare_parameter("plateau_lookahead", 9)     # 平台检查窗口
-        self.declare_parameter("arm_retries", 30)          # 每 0.2s 尝试一次解锁
 
         self.speed = float(self.get_parameter("speed").value)
         self.turn_straight = float(self.get_parameter("turn_straight").value)
@@ -72,13 +70,9 @@ class Lap1Driver(Node):
         self.plateau_tolerance = float(self.get_parameter("plateau_tolerance").value)
         self.plateau_min = int(self.get_parameter("plateau_min").value)
         self.plateau_lookahead = int(self.get_parameter("plateau_lookahead").value)
-        self.arm_retries = int(self.get_parameter("arm_retries").value)
 
-        # 状态机：ARMING -> DRIVING -> DONE
-        self.state = "ARMING"
-        self.arm_tries = 0
-        self.adapter_state = None     # /nav/adapter_state 反馈（导航模式才有；建图模式无此话题）
-        self.create_subscription(String, "/nav/adapter_state", self.on_adapter_state, 10)
+        # 状态机：DRIVING -> DONE
+        self.state = "DRIVING"
         self.odom_pos = None
         self.start_pos = None      # 首次 odom 位置作为回圈基准（不硬编码原点）
         self.last_odom = None
@@ -91,11 +85,6 @@ class Lap1Driver(Node):
         self.get_logger().info(
             f"Lap1 driver ready: speed={self.speed}, straight={self.turn_straight}, "
             f"kp={self.kp}, min_track={self.min_track_len}m, return<{self.return_threshold}m")
-
-    # ------------------------------------------------------------------
-    def on_adapter_state(self, msg):
-        self.adapter_state = msg.data
-        self.get_logger().info(f"adapter_state: {msg.data}")
 
     # ------------------------------------------------------------------
     def on_odom(self, msg):
@@ -257,34 +246,6 @@ class Lap1Driver(Node):
 
     # ------------------------------------------------------------------
     def timer_cb(self):
-        if self.state == "ARMING":
-            self.arm_tries += 1
-            arm = Bool()
-            arm.data = True
-            self.arm_pub.publish(arm)
-            if self.arm_tries % 10 == 0:
-                self.get_logger().info(f"Arm attempt {self.arm_tries}/{self.arm_retries}")
-            # 反馈确认：导航模式可订阅 /nav/adapter_state；建图模式无此话题则按重试次数兜底
-            if self.adapter_state is not None:
-                if "ARMED" in self.adapter_state:
-                    self.state = "DRIVING"
-                    self.get_logger().info("Adapter reports ARMED, switching to DRIVING")
-                    return
-                if self.arm_tries >= self.arm_retries:
-                    self.get_logger().error(
-                        f"ARMED not confirmed after {self.arm_retries} tries "
-                        f"(adapter_state={self.adapter_state}); aborting")
-                    self.state = "DONE"
-                    self.done_ticks = 0   # 解锁失败：绝不发布完成信号
-                    return
-            else:
-                if self.arm_tries >= self.arm_retries:
-                    self.state = "DRIVING"
-                    self.get_logger().info(
-                        f"No adapter_state feedback (manual mode); arm published "
-                        f"{self.arm_tries}x, switching to DRIVING")
-            return
-
         if self.state == "DRIVING":
             self.check_lap_done()
             # 调试：每 2 秒打印左右间隙

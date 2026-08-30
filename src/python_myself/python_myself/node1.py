@@ -37,8 +37,8 @@ class BucketPoint:
 class ServoPID:
     def __init__(self):
         self.lidar_angle = 0.0
-        self.P = 0.6
-        self.D = 0.12
+        self.P = 0.48
+        self.D = 0.1
         self.I = 0.0
         self.angle_integral_error = 0.0
         self.integral_limit = 100.0
@@ -59,7 +59,8 @@ class LidarCoordinateControlNode(Node):
         self.servo = ServoPID()
         
         self.cmd_vel = Twist()
-        self.publisher_twist = self.create_publisher(Twist, 'car_cmd_vel', 10)
+        #self.publisher_twist = self.create_publisher(Twist, 'car_cmd_vel', 10)
+        self.publisher_twist = self.create_publisher(Twist, 'teleop_cmd_vel', 10)
         self.subscription_scan = self.create_subscription(
             LaserScan,
             '/scan',
@@ -67,19 +68,19 @@ class LidarCoordinateControlNode(Node):
             100
         )
 
-        self.default_linear_speed = 0.4
+        self.default_linear_speed = 0.35
 
-        # Í°ÅÐ¾ÝËã·¨²ÎÊý£¨Óë node2 ±£³ÖÒ»ÖÂ£¬±ãÓÚÒÆÖ²µ÷ÊÔ£©
-        self.bucket_threshold = 10            # Á¬Ðø¶àÉÙ¸öµãËãÒ»¸öÍ°
-        self.valid_bucket_threshold = 6       # Ò»¸öÍ°×îÉÙÐèÒªµÄÓÐÐ§µãÊý
-        self.lidar_filter_min_dist = 0.3      # ¹ýÂË¹ý½üÔëµã
-        self.lidar_filter_max_dist = 2.5      # ¹Ø×¢Ç°·½ 2.5m ÄÚ
-        self.roi_y_min = -0.2                 # ROI ºó½ç
-        self.roi_y_max = 3.0                  # ROI Ç°½ç
-        self.max_left_distance = 1.5          # ROI ×ó½ç
-        self.min_right_distance = 1.5         # ROI ÓÒ½ç
-        self.steer_gain = 20.0                # ºáÏòÎó²î·Å´ó±¶Êý
-        self.steer_threshold_slow_down = 20.0 # ´ó×ª½Ç¼õËÙãÐÖµ£¨¶È£©
+        # Í°ï¿½Ð¾ï¿½ï¿½ã·¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ node2 ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Â£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö²ï¿½ï¿½ï¿½Ô£ï¿½
+        self.bucket_threshold = 10            # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ù¸ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Í°
+        self.valid_bucket_threshold = 6       # Ò»ï¿½ï¿½Í°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½
+        self.lidar_filter_min_dist = 0.3      # ï¿½ï¿½ï¿½Ë¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        self.lidar_filter_max_dist = 2.5      # ï¿½ï¿½×¢Ç°ï¿½ï¿½ 2.5m ï¿½ï¿½
+        self.roi_y_min = -0.2                 # ROI ï¿½ï¿½ï¿½
+        self.roi_y_max = 3.0                  # ROI Ç°ï¿½ï¿½
+        self.max_left_distance = 1.5          # ROI ï¿½ï¿½ï¿½
+        self.min_right_distance = 1.5         # ROI ï¿½Ò½ï¿½
+        self.steer_gain = 20.0                # ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å´ï¿½ï¿½ï¿½
+        self.steer_threshold_slow_down = 20.0 # ï¿½ï¿½×ªï¿½Ç¼ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½È£ï¿½
 
         self.get_logger().info("Lidar coordinate control node started (Bucket algorithm, pure lidar)")
     

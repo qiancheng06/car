@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/src/racecar/racecar/scripts/install/setup.sh

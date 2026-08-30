@@ -100,23 +100,16 @@ ros2 topic info /racecar_driver/cmd_pwm --verbose
 
 确认 `/racecar_driver/cmd_pwm` 只有 `nav_cmd_adapter` 一个发布者，并确认雷达、里程计、地图与 TF 正常。默认 AMCL 初始位姿是地图 `(0,0,0)`；若实车不在建图起点，先在 RViz 设置正确初始位姿。
 
-确认无误后解锁。驱动和适配器会同时收到这条命令，并且只接受解锁之后的新速度命令：
-
-```bash
-ros2 topic pub --once /nav/arm std_msgs/msg/Bool "{data: true}"
-```
-
-先发送 1–2 m 的近距离直线目标。软件停车命令是：
+确认无误后，先发送 1–2 m 的近距离直线目标。软件停车命令是：
 
 ```bash
 ros2 topic pub --once /nav/estop std_msgs/msg/Bool "{data: true}"
 ```
 
-解除软件停车后不会自动恢复，必须先释放，再重新解锁：
+解除软件停车即可恢复行驶：
 
 ```bash
 ros2 topic pub --once /nav/estop std_msgs/msg/Bool "{data: false}"
-ros2 topic pub --once /nav/arm std_msgs/msg/Bool "{data: true}"
 ```
 
 需要 RViz 或指定比赛地图时，必须先停掉原来的 `nav-one.sh`，再用下列命令替代首次启动命令，不能重复启动整套导航：

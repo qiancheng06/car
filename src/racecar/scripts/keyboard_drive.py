@@ -14,7 +14,6 @@ import tty
 import rclpy
 from geometry_msgs.msg import Twist
 from rclpy.node import Node
-from std_msgs.msg import Bool
 
 
 NEUTRAL_PWM = 1500.0
@@ -66,7 +65,6 @@ def read_key(timeout_sec=0.05):
 class KeyboardDrive(Node):
     def __init__(self):
         super().__init__("keyboard_drive")
-        self.arm_pub = self.create_publisher(Bool, "/nav/arm", 10)
         self.cmd_pub = self.create_publisher(Twist, "/teleop_cmd_vel", 10)
         calibration = self.load_calibration()
         self.steering_center_deg = calibration["steering_center_deg"]
@@ -289,15 +287,9 @@ class KeyboardDrive(Node):
         deadline = time.monotonic() + 12.0
         while time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.1)
-            if (
-                self.arm_pub.get_subscription_count() >= 1
-                and self.cmd_pub.get_subscription_count() >= 1
-            ):
+            if self.cmd_pub.get_subscription_count() >= 1:
                 return
-        raise RuntimeError("没有发现底盘驱动订阅，未解锁")
-
-    def publish_arm(self, armed):
-        self.arm_pub.publish(Bool(data=armed))
+        raise RuntimeError("没有发现底盘驱动订阅")
 
     def publish_command(self):
         now = time.monotonic()
@@ -404,7 +396,6 @@ class KeyboardDrive(Node):
         try:
             tty.setcbreak(sys.stdin.fileno())
             for _ in range(10):
-                self.publish_arm(True)
                 self.stop()
                 rclpy.spin_once(self, timeout_sec=0.0)
                 time.sleep(0.05)
@@ -425,7 +416,7 @@ class KeyboardDrive(Node):
             while running:
                 key = read_key()
                 if key is None:
-                    print("\nTerminal connection closed; stopping and disarming.", flush=True)
+                    print("\nTerminal connection closed; stopping.", flush=True)
                     break
                 if key:
                     running = self.handle_key(key)
@@ -435,7 +426,6 @@ class KeyboardDrive(Node):
         finally:
             self.stop()
             for _ in range(12):
-                self.publish_arm(False)
                 self.publish_command()
                 rclpy.spin_once(self, timeout_sec=0.0)
                 time.sleep(0.05)

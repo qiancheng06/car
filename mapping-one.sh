@@ -32,8 +32,6 @@ cleanup() {
   cleanup_started=true
   trap - EXIT INT TERM HUP
 
-  timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-    '{data: false}' >/dev/null 2>&1 || true
   if [[ -n "$mapping_pid" ]] && kill -0 "$mapping_pid" 2>/dev/null; then
     kill -TERM -- "-$mapping_pid" 2>/dev/null || kill -TERM "$mapping_pid" 2>/dev/null || true
     for _ in {1..80}; do
@@ -62,7 +60,7 @@ topic_exists() {
   grep -qx "$topic_name" <<<"$topics"
 }
 
-echo "Starting mapping; the chassis remains DISARMED during initialization."
+echo "Starting mapping."
 echo "Please wait about 20-40 seconds. Detailed log: $MAPPING_LOG"
 START_RVIZ="${START_RVIZ:-false}" setsid bash "$SCRIPT_DIR/gmapping.sh" \
   >"$MAPPING_LOG" 2>&1 &

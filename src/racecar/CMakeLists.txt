@@ -81,6 +81,8 @@ install(PROGRAMS
   scripts/race_preflight.py
   scripts/yolo_vision_node.py
   scripts/npu_vision_node.py
+  scripts/yellow_band_node.py
+  scripts/track_center_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 install(PROGRAMS

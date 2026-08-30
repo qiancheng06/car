@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/src/racecar/scripts/cv_follow_node.py

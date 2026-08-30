@@ -17,3 +17,9 @@ log/
 
 # Git backup
 src/racecar/.git-backup/
+
+# Runtime / data / device files
+vision_data/
+.codex_stage/
+ttyUSB0
+*.pt

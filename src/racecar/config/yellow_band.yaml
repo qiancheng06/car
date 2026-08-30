@@ -1,0 +1,15 @@
+yellow_band_detector:
+  ros__parameters:
+    image_topic: /image_raw
+    yellow_band_topic: /racecar/yellow_band
+    debug_topic: /racecar/yellow_band/debug_image
+    publish_debug_image: true
+    process_rate_hz: 15.0
+    roi_top_ratio: 0.45
+    roi_bottom_ratio: 1.0
+    min_area_ratio: 0.012
+    min_width_ratio: 0.08
+    hue_min: 18
+    hue_max: 38
+    saturation_min: 80
+    value_min: 80

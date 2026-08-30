@@ -325,7 +325,6 @@ nav_cmd_adapter:
   ros__parameters:
     input_topic: /cmd_vel
     output_topic: /racecar_driver/cmd_pwm
-    arm_topic: /nav/arm
     estop_topic: /nav/estop
     state_topic: /nav/adapter_state
     publish_rate_hz: 30.0

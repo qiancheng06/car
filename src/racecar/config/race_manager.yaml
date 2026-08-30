@@ -16,9 +16,9 @@ race_manager:
     # PWM command limits for the driver teleop path.
     pwm_stop_speed: 1500.0
     pwm_neutral_steer: 90.0
-    pwm_lap1_speed: 1538.0
-    pwm_lap2_speed: 1548.0
-    pwm_max_speed: 1565.0
+    pwm_lap1_speed: 1525.0
+    pwm_lap2_speed: 1525.0
+    pwm_max_speed: 1525.0
     pwm_min_steer: 35.0
     pwm_max_steer: 145.0
 
@@ -39,11 +39,27 @@ race_manager:
     parking_sign_min_frames: 3
     parking_approach_s: 1.0
     parking_turn_s: 1.5
-    parking_speed_pwm: 1530.0
+    parking_speed_pwm: 1525.0
     parking_left_steer_pwm: 62.0
     parking_right_steer_pwm: 118.0
     template_a_path: ""
     template_b_path: ""
+
+    # Yellow tape band visual following. Engages when the detector reports the
+    # band for yellow_enter_min_frames consecutive frames; back to lidar
+    # following after the band is lost for yellow_exit_lost_s seconds.
+    # Steer gain: PWM delta per unit of normalized band offset (0.5 = band at
+    # frame edge). Verify the steering sign on a stand before the first run.
+    enable_yellow_band: true
+    yellow_band_topic: /racecar/yellow_band
+    yellow_enter_min_frames: 4
+    yellow_exit_lost_s: 1.5
+    yellow_data_timeout_s: 0.6
+    yellow_max_duration_s: 25.0
+    yellow_steer_gain_pwm: 45.0
+    yellow_speed_pwm: 1525.0
+    yellow_steer_gain_norm: 1.6
+    yellow_speed_norm: 0.18
 
     save_map_on_lap1_complete: true
     map_save_path: /home/davinci-mini/racecar/src/racecar/map/competition_map

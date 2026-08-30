@@ -1,5 +1,0 @@
-[console_scripts]
-encoder_imu_node = encoder.encoder_imu:main
-encoder_node = encoder.encoder_node:main
-test = encoder.test:main
-

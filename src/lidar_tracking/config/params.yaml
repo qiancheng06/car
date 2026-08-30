@@ -2,19 +2,20 @@
   ros__parameters:
     topic: "teleop_cmd_vel"
 
-    # PID
-    speed: 1530
-    kp: 1.40
+    # PID (kp 1.4->0.9, kd 1.3->0.5: 0.3m偏差不再直接打出22度转向,
+    #  配合代码里的EMA平滑,消除63/117限位画龙; 赛道实测后可再回调)
+    speed: 1516
+    kp: 0.9
     ki: 0.0
-    kd: 1.30
+    kd: 0.5
 
     # 路径规划权重
-    rate1: 0.80
-    rate2: 1.60
-    rate3: 1.40
+    rate1: 0.88
+    rate2: 1.6
+    rate3: 1.4
 
     # 扇形检测
-    no_cone_detection_range: 1.30
+    no_cone_detection_range: 1.3
     no_cone_sector_angle: 84.0
 
     # 正常循迹范围
@@ -22,5 +23,7 @@
     max_left_dis: 1.5
 
     # 无锥桶巡航
-    no_cone_speed: 1530
+    # ★调:速度 1525→1516(慢速搜索,不冲出去);转向角 105→100(半径 ~1.7m,
+    #   边前进边扫,更快找到锥桶退出绕圈,不再原地踟蹰)
+    no_cone_speed: 1515
     no_cone_turn_angle: 105.0

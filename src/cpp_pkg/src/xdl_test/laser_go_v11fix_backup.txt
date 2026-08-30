@@ -1,0 +1,247 @@
+#include "rclcpp/rclcpp.hpp"                  // ROS 2 核心头文件
+#include "sensor_msgs/msg/laser_scan.hpp"     // ROS 2 激光雷达消息
+#include "geometry_msgs/msg/twist.hpp"        // ROS 2 速度控制消息
+#include <cmath>                              // C++ 数学库
+#include <algorithm>                          // std::sort（按 y 配对排序）
+//版本11-fix（修复直角冲出）
+#define SPEED       1525   // 直道基础线速度
+#define SPEED_SLOW  1510   // 弯道减速值（驱动throttle包络1500~1550，必须≥1500）
+#define LOOKAHEAD_Y 3.0    // 前瞻距离（原 2.0 -> 3.0）
+
+
+// 1. 极坐标系结构体
+struct PointPolar {
+    double range = 0.0;  // 距离（初始化避免随机值）
+    double theta = 0.0;  // 角度（弧度，初始化避免随机值）
+};
+// 2. 直角坐标系结构体
+struct PointRectangular {
+    double x = 0.0;  // x 坐标
+    double y = 0.0;  // y 坐标
+};
+// 3. 向量结构体
+struct VectorQuantity {
+    double a = 0.0;  // x 坐标
+    double b = 0.0;  // y 坐标
+};
+// 3. 极坐标转直角坐标函数
+void cal_point(double theta, double range, double &tmp_x, double &tmp_y) {
+    tmp_x = range * std::sin(theta);
+    tmp_y = range * std::cos(theta);
+}
+// 4. 节点类（替代 ROS 1 的 PubAndSub，继承 rclcpp::Node）
+class LaserGoNode : public rclcpp::Node {
+private:
+    // ROS 2 发布者（智能指针类型）
+    rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
+    // ROS 2 订阅者（智能指针类型）
+    rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr laser_sub_;
+    // 5. 激光雷达回调函数
+    void laser_callback(const sensor_msgs::msg::LaserScan::SharedPtr laser) {
+        int i = 0, red_cone_Index = 0, blue_cone_Index = 0; //红:red_cone_Index  蓝:blue_cone_Index
+        int ranges_size = laser->ranges.size(); // 每转一圈雷达扫描次数
+        double error = 0.0, theta = 0.0, tmp_x = 0.0, tmp_y = 0.0, angle = 0.0;
+        geometry_msgs::msg::Twist twist;  // ROS 2 速度消息（类型后缀加 msg::）
+
+
+        // 红蓝锥桶数组（初始化成员，避免随机值）
+        PointRectangular red_p[30] = {{0.0, 0.0}};    // 红色锥桶
+        PointRectangular blue_p[30] = {{0.0, 0.0}};   // 蓝色锥桶
+        // -------------------------- 第一步：初步筛选红蓝锥桶 --------------------------
+        for (i = 1; i < ranges_size; i++) {
+            // 检测距离突变且在有效范围内的点（判断是否为锥桶边缘）
+            // ★ fix：range 上限与 LOOKAHEAD_Y 保持一致，让 3.0m 前瞻真正生效
+            if ((laser->ranges[i-1] - laser->ranges[i] >= 2.0) &&
+                (laser->ranges[i] < LOOKAHEAD_Y) &&
+                (std::isfinite(laser->ranges[i]))) {
+                theta = i * laser->angle_increment + laser->angle_min;
+                // 极坐标转直角坐标
+                cal_point(theta, laser->ranges[i], tmp_x, tmp_y);
+                // 筛选有效锥桶（前瞻距离 LOOKAHEAD_Y = 3.0，提前发现直角弯）
+                if ((tmp_x <= 1.5 && tmp_x >= -1.5) && (tmp_y <= LOOKAHEAD_Y && tmp_y >= -0.1)) {
+                    // 左方锥桶（x>0）标记为红色
+                    if (tmp_x > 0) {
+                        red_p[red_cone_Index].x = tmp_x;
+                        red_p[red_cone_Index].y = tmp_y;
+                        red_cone_Index++;
+                    }
+                    // 右方锥桶（x<=0）标记为蓝色
+                    else {
+                        blue_p[blue_cone_Index].x = tmp_x;
+                        blue_p[blue_cone_Index].y = tmp_y;
+                        blue_cone_Index++;
+                    }
+                }
+            }
+        }
+        // -------------------------- 特判分支（均为弯道/异常场景，★ fix：统一降速） --------------------------
+        // 如果发现一个锥桶，满舵左转（低速）
+        if (red_cone_Index == 1 || blue_cone_Index == 1) {
+            twist.linear.x = SPEED_SLOW;
+            twist.angular.z = 145;          // 左转（驱动steering包络允许的最大值）
+            cmd_vel_pub_->publish(twist);
+            RCLCPP_INFO(this->get_logger(), "into_yellow_line");
+            return;
+        }
+        // 如果没有发现锥桶，左转寻找（低速）
+        if (red_cone_Index == 0 && blue_cone_Index == 0) {
+            twist.linear.x = SPEED_SLOW;
+            twist.angular.z = 118;          // 左转
+            cmd_vel_pub_->publish(twist);
+            RCLCPP_INFO(this->get_logger(), "into_yellow_line");
+            return;
+        }
+        // 只看到单侧锥桶，满舵左转（低速）
+        if (red_cone_Index == 0 || blue_cone_Index == 0) {
+            twist.linear.x = SPEED_SLOW;
+            twist.angular.z = 145;          // 左转（驱动steering包络允许的最大值）
+            cmd_vel_pub_->publish(twist);
+            RCLCPP_INFO(this->get_logger(), "into_yellow_line");
+            return;
+        }
+
+
+        // -------------------------- 第二步：修正锥桶分组（避免误分类） --------------------------
+        // 情况1：蓝色锥桶数量多于红色（可能存在误分类，将部分红桶归为蓝桶），在右转弯处
+        if (blue_cone_Index >= red_cone_Index) {
+            int m = 100;  // 标记误分类的起始索引（初始值为无效值）
+            for (int i = 1; i <= blue_cone_Index - 1; i++) {
+                double dist = std::sqrt(
+                    std::pow(blue_p[i-1].x - blue_p[i].x, 2) +
+                    std::pow(blue_p[i-1].y - blue_p[i].y, 2)
+                );
+                if (dist >= 1.4) {
+                    m = i;
+                    break;
+                }
+            }
+            if (m != 100) {
+                for (int i = red_cone_Index - 1; i >= 0; i--) {
+                    red_p[i + blue_cone_Index - m] = red_p[i];
+                }
+                for (int i = 0; i <= blue_cone_Index - m - 1; i++) {
+                    red_p[i] = blue_p[m + i];
+                }
+                red_cone_Index += (blue_cone_Index - m);
+                blue_cone_Index = m;
+            }
+        }
+        // 情况2：红色锥桶数量多于蓝色（类似逻辑，将部分蓝桶归为红桶），在左转弯处
+        else {
+            int m = 100;
+            for (int i = red_cone_Index - 2; i >= 0; i--) {
+                double dist = std::sqrt(
+                    std::pow(red_p[i].x - red_p[i+1].x, 2) +
+                    std::pow(red_p[i].y - red_p[i+1].y, 2)
+                );
+                if (dist >= 1.4) {
+                    m = i;
+                }
+            }
+            if (m != 100) {
+                for (int i = 0; i <= m; i++) {
+                    blue_p[blue_cone_Index + i] = red_p[i];
+                }
+                for (int i = 0; i <= red_cone_Index - m - 2; i++) {
+                    red_p[i] = red_p[i + m + 1];
+                }
+                red_cone_Index -= (m + 1);
+                blue_cone_Index += (m + 1);
+            }
+        }
+        // 打印筛选后的红锥桶坐标
+        for (int i = 0; i <= red_cone_Index - 1; i++) {
+            RCLCPP_INFO(this->get_logger(), "red_bucket:(%.2f, %.2f),lidar scan times:%d", red_p[i].x, red_p[i].y, ranges_size);
+        }
+        // 打印筛选后的蓝锥桶坐标
+        for (int i = 0; i <= blue_cone_Index - 1; i++) {
+            RCLCPP_INFO(this->get_logger(), "blue_bucket:(%.2f, %.2f),lidar scan times:%d", blue_p[i].x, blue_p[i].y, ranges_size);
+        }
+
+
+        // -------------------------- 第三步：计算误差与 PID 控制 --------------------------
+        // 取红蓝桶数量一致（避免误差计算失衡）
+        if (red_cone_Index > blue_cone_Index) {
+            red_cone_Index = blue_cone_Index;
+        } else {
+            blue_cone_Index = red_cone_Index;
+        }
+        // 按 y 坐标从远到近排序，避免直角处红蓝桶索引错位配对
+        std::sort(red_p, red_p + red_cone_Index, [](const PointRectangular& a, const PointRectangular& b) {
+            return a.y > b.y;   // y 大 = 距离远，从远到近
+        });
+        std::sort(blue_p, blue_p + blue_cone_Index, [](const PointRectangular& a, const PointRectangular& b) {
+            return a.y > b.y;
+        });
+        // 误差累计（加权递推，gamma=0.7 为权重，单帧内从近到远递推）
+        double gamma = 0.7;
+        for (i = blue_cone_Index - 1; i >= 0; i--) {
+            // 从近到远递推；左右锥桶中心在车左边则 error>0（高舵角=左转）
+            error = gamma * error + (blue_p[i].x + red_p[i].x);
+        }
+        // 比例控制（误差放大 33 倍，对应转向灵敏度）
+        angle = error * 33;
+
+
+        // -------------------------- 第四步：构造速度控制指令 --------------------------
+        twist.angular.z = 90 + angle;  // 90 为直行基准值
+        // 限幅放宽以支持直角弯（注：接近舵机 PWM 标定边缘，长时间满舵有堵转风险）
+        if (twist.angular.z > 145) twist.angular.z = 145;
+        if (twist.angular.z < 30)  twist.angular.z = 30;
+
+
+        // 弯道自动减速（误差大=在转弯，降低线速度缩小转弯半径）
+        double abs_err = std::abs(error);
+        if (abs_err > 1.5) {
+            twist.linear.x = SPEED_SLOW;                  // 急弯/直角：低速
+        } else if (abs_err > 0.6) {
+            twist.linear.x = (SPEED + SPEED_SLOW) / 2;    // 缓弯：中速
+        } else {
+            twist.linear.x = SPEED;                       // 直道：全速
+        }
+
+
+        // ★ fix：直角弯强制急转——要求"远近一致"才触发，防止直道误打满舵
+        if (red_cone_Index >= 2 && blue_cone_Index >= 2) {
+            double far_red_x   = red_p[0].x;      // 最远红桶（排序后索引0最远）
+            double far_blue_x  = blue_p[0].x;     // 最远蓝桶
+            double near_red_x  = red_p[red_cone_Index - 1].x;    // 最近红桶
+            double near_blue_x = blue_p[blue_cone_Index - 1].x;  // 最近蓝桶
+            double far_center  = (far_red_x + far_blue_x) / 2.0;
+            double near_center = (near_red_x + near_blue_x) / 2.0;
+            // 远近两对中心都在同一侧（弯道特征），且偏差足够大才打满舵
+            if (std::abs(far_center) > 1.0 && far_center * near_center > 0) {
+                twist.angular.z = far_center > 0 ? 145 : 30;  // 中心偏左满舵左转，偏右满舵右转
+                twist.linear.x  = SPEED_SLOW;
+            }
+        }
+
+
+        // 其他轴置0
+        twist.angular.x = 0.0;
+        twist.angular.y = 0.0;
+        twist.linear.y  = 0.0;
+        twist.linear.z  = 0.0;
+        cmd_vel_pub_->publish(twist);
+        //RCLCPP_INFO(this->get_logger(), "red_buckets:%d ,blue_buckets:%d", red_cone_Index, blue_cone_Index);
+        //RCLCPP_INFO(this->get_logger(), "PID error:%.2f,turning_angle:%.2f", error, twist.angular.z);
+    }
+public:
+    // 6. 节点构造函数（初始化 ROS 2 节点、发布者、订阅者）
+    LaserGoNode() : Node("laser_go") {
+        cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/teleop_cmd_vel", 5);
+        laser_sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(
+            "/scan", 5,
+            std::bind(&LaserGoNode::laser_callback, this, std::placeholders::_1)
+        );
+        RCLCPP_INFO(this->get_logger(), "LaserGoNode has been initialized!");
+    }
+};
+// 7. 主函数（ROS 2 节点入口）
+int main(int argc, char *argv[]) {
+    rclcpp::init(argc, argv);
+    auto node = std::make_shared<LaserGoNode>();
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+    return 0;
+}

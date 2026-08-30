@@ -82,6 +82,14 @@
      // ===== 状态管理变量 =====
      bool is_no_cone_mode = false;               // 当前是否处于无锥桶巡航状态
      double no_cone_start_time;                  // 进入无锥桶状态的时间戳
+
+     // ★新增:误差平滑与诊断记录(修复打满限位画龙问题)
+     double ema_error = 0.0;                     // 误差指数滑动平均(EMA)后的值
+     bool ema_initialized = false;               // EMA是否已初始化
+     double last_pid_error = 0.0;                // 最近一帧的原始误差(仅用于状态打印诊断)
+     
+     // ===== 动态参数回调句柄 =====
+     rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_cb_handle_;
      
      // ===== 扇形检测参数 =====
      double no_cone_detection_range;             // 无锥桶检测范围（米）
@@ -105,8 +113,8 @@
          
          // ===== 声明ROS2参数 =====
          // 基础控制参数
-         this->declare_parameter("speed", 1535);                     // 基础行驶速度
-         this->declare_parameter("kp", 0.88);                       // PID比例系数
+         this->declare_parameter("speed", 1530);                     // 基础行驶速度
+         this->declare_parameter("kp", 1.00);                       // PID比例系数
          this->declare_parameter("ki", 0.0);                        // PID积分系数
          this->declare_parameter("kd", 1.2);                        // PID微分系数
          this->declare_parameter("topic", ttopic);                  // 发布话题名称
@@ -128,39 +136,70 @@
          this->declare_parameter("max_right_dis", 1.5);             // 正常循迹状态下的最大右侧检测距离
          this->declare_parameter("max_left_dis", 1.5);              // 正常循迹状态下的最大左侧检测距离
          
-         // ===== 获取参数值 =====
-         speed = this->get_parameter("speed").as_int();             // 获取基础速度参数
-         pid.kp = this->get_parameter("kp").as_double();            // 获取PID比例系数
-         pid.ki = this->get_parameter("ki").as_double();            // 获取PID积分系数
-         pid.kd = this->get_parameter("kd").as_double();            // 获取PID微分系数
-         topic = this->get_parameter("topic").as_string();          // 获取发布话题名称
-         rate_p[0] = this->get_parameter("rate1").as_double();      // 获取第一对锥桶权重
-         rate_p[1] = this->get_parameter("rate2").as_double();      // 获取第二对锥桶权重
-         rate_p[2] = this->get_parameter("rate3").as_double();      // 获取第三对锥桶权重
-         
-         // 获取扇形检测参数（角度单位转弧度）
-         no_cone_detection_range = this->get_parameter("no_cone_detection_range").as_double();
-         no_cone_sector_angle = this->get_parameter("no_cone_sector_angle").as_double() * M_PI / 180.0;
-         
-         // 获取无锥桶巡航状态参数
-         no_cone_speed = this->get_parameter("no_cone_speed").as_int();
-         no_cone_turn_angle = this->get_parameter("no_cone_turn_angle").as_double();
-         
-         // 获取正常循迹状态参数
-         max_right_dis = this->get_parameter("max_right_dis").as_double();
-         max_left_dis = this->get_parameter("max_left_dis").as_double();
-         
-         // ===== 创建ROS2通信组件 =====
-         pub_ = this->create_publisher<geometry_msgs::msg::Twist>(topic, 5);      // 创建速度控制发布器
-         sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(           // 创建激光雷达数据订阅器
-             "/scan", 5, std::bind(&PubAndSub::callback, this, std::placeholders::_1));
-         
-         // ===== 创建状态打印定时器 =====
-         status_timer_ = this->create_wall_timer(
-             std::chrono::milliseconds(500),  // 500毫秒 = 0.5秒
-             std::bind(&PubAndSub::printStatus, this)
-         );
-     }
+          // ===== 获取参数值 =====
+          loadParams();
+          
+          // ===== 创建ROS2通信组件 =====
+          pub_ = this->create_publisher<geometry_msgs::msg::Twist>(topic, 5);      // 创建速度控制发布器
+          sub_ = this->create_subscription<sensor_msgs::msg::LaserScan>(           // 创建激光雷达数据订阅器
+              "/scan", 5, std::bind(&PubAndSub::callback, this, std::placeholders::_1));
+          
+          // ===== 创建状态打印定时器 =====
+          status_timer_ = this->create_wall_timer(
+              std::chrono::milliseconds(500),  // 500毫秒 = 0.5秒
+              std::bind(&PubAndSub::printStatus, this)
+          );
+          
+           // ===== 注册动态参数回调（支持在线调参） =====
+           param_cb_handle_ = this->add_on_set_parameters_callback(
+               std::bind(&PubAndSub::paramCallback, this, std::placeholders::_1));
+      }
+      
+      // ===== 读取全部参数（启动时和在线调参时调用） =====
+      void loadParams()
+      {
+          speed = this->get_parameter("speed").as_int();             // 获取基础速度参数
+          pid.kp = this->get_parameter("kp").as_double();            // 获取PID比例系数
+          pid.ki = this->get_parameter("ki").as_double();            // 获取PID积分系数
+          pid.kd = this->get_parameter("kd").as_double();            // 获取PID微分系数
+          topic = this->get_parameter("topic").as_string();          // 获取发布话题名称
+          rate_p[0] = this->get_parameter("rate1").as_double();      // 获取第一对锥桶权重
+          rate_p[1] = this->get_parameter("rate2").as_double();      // 获取第二对锥桶权重
+          rate_p[2] = this->get_parameter("rate3").as_double();      // 获取第三对锥桶权重
+          
+          // 获取扇形检测参数（角度单位转弧度）
+          no_cone_detection_range = this->get_parameter("no_cone_detection_range").as_double();
+          no_cone_sector_angle = this->get_parameter("no_cone_sector_angle").as_double() * M_PI / 180.0;
+          
+          // 获取无锥桶巡航状态参数
+          no_cone_speed = this->get_parameter("no_cone_speed").as_int();
+          no_cone_turn_angle = this->get_parameter("no_cone_turn_angle").as_double();
+          
+          // 获取正常循迹状态参数
+          max_right_dis = this->get_parameter("max_right_dis").as_double();
+          max_left_dis = this->get_parameter("max_left_dis").as_double();
+      }
+      
+      // ===== 动态参数回调：在线修改参数后立即生效 =====
+      rcl_interfaces::msg::SetParametersResult paramCallback(
+          const std::vector<rclcpp::Parameter> &params)
+      {
+          rcl_interfaces::msg::SetParametersResult result;
+          result.successful = true;
+          (void)params;  // 统一重新读取所有参数，无需逐个处理
+          
+          // 话题变更时重建发布器
+          std::string new_topic = this->get_parameter("topic").as_string();
+          if (new_topic != topic)
+          {
+              pub_ = this->create_publisher<geometry_msgs::msg::Twist>(new_topic, 5);
+              RCLCPP_INFO(this->get_logger(), "发布话题已切换: %s", new_topic.c_str());
+          }
+          
+          loadParams();
+          RCLCPP_INFO(this->get_logger(), "参数已在线更新");
+          return result;
+      }
      
      // ===== 核心功能函数声明 =====
      /**
@@ -257,10 +296,14 @@
              continue;
          }
          
-         // 扇形区域检测：角度和距离都在范围内
-         if (abs(theta) <= no_cone_sector_angle && range <= no_cone_detection_range) {
-             return false; // 检测到物体，不进入无锥桶巡航
-         }
+          // 扇形区域检测：角度和距离都在范围内
+          // ★修复:原 abs(theta)<=扇区 只覆盖 0~84°(左前方),右前方(角度 2π-84°~2π)完全漏检,
+          //   导致右前方有锥桶也误判"无锥桶"进入绕圈模式。改为覆盖前方 ±扇区(含两侧)。
+          bool in_front_sector = (theta <= no_cone_sector_angle) ||
+                                 (theta >= 2.0 * M_PI - no_cone_sector_angle);
+          if (in_front_sector && range <= no_cone_detection_range) {
+              return false; // 检测到物体，不进入无锥桶巡航
+          }
      }
      
      return true; // 扇形区域内无物体，可以进入无锥桶巡航
@@ -314,15 +357,18 @@
  void PubAndSub::handleNormalMode(double angle)
  {
      // 正常循迹状态控制逻辑：基准舵角82 + PID输出
-     twist.angular.z = 82.5 + angle;                               // 基础转向角度 + PID输出
-     if (twist.angular.z < 63.0) twist.angular.z = 63.0;           // 限幅：对应PWM1200~1800安全包络
+     twist.angular.z = 86.5 + angle;                               // ★车上已改 82.5→86.5
+     if (twist.angular.z < 63.0) twist.angular.z = 63.0;           // ★车上新增限幅：对应PWM1200~1800安全包络
      if (twist.angular.z > 117.0) twist.angular.z = 117.0;
-     twist.linear.x = speed;                                     // 使用基础行驶速度
+     twist.linear.x = speed;                                     
      
      // 大转向角度时减速，提高安全性
+     // ★修复:原 -=21 会把速度拉到 1530-21=1509,低于电机死区(1512)导致急弯时电机不动=停车。
+     //   改为 -=12 并加死区地板 1515。
      if (abs(angle) >= 20) {
-         twist.linear.x -= 21;                                    // 转向角度过大时减速
+         twist.linear.x -= 12;
      }
+     if (twist.linear.x < 1515.0) twist.linear.x = 1515.0;         // 死区地板
  }
  
  /**
@@ -337,8 +383,11 @@
      double theta = 0, tmp_x = 0, tmp_y = 0;
  
      j = 0; k = 0;                                                // 计数清零
-     // 注意：此处沿用原逻辑使用固定freq与i+1/i+9访问，保持行为一致
-     for (i = 1; i < freq - 9; i++)
+     // ★修复:原写死 freq=1440 只扫索引 1~1430(M10 雷达 3600 点/圈),
+     //   右侧(负角度侧)锥桶全部漏检。改为按实际扫描点数遍历,覆盖全圈。
+     int scan_n = (int)laser->ranges.size();
+     if (scan_n > 3601) scan_n = 3601;                             // 防越界
+     for (i = 1; i < scan_n - 9; i++)
      {
          // 距离突变阈值判定 + 前后点一致性校验
          if (laser->ranges[i - 1] - laser->ranges[i] >= 1.5 &&
@@ -585,11 +634,25 @@
          if (side != 0)
          {
              error = (0.75 - nearest) * 53.33 * side;
+             // ★修复:单侧兜底不再直接打满限位。原实现距离1.19m就输出-23.5°(63°限位),
+             //   持续打死方向导致画龙冲出赛道。限制到±12°,柔和回中。
+             if (error > 12.0) error = 12.0;
+             if (error < -12.0) error = -12.0;
          }
      }
  
      // ===== PID调节与速度控制 =====
-     angle = pid.PIDPositional(error);                        // PID位置式输出舵机修正量
+     // ★新增:误差EMA平滑。锥桶检测存在断续(背景近于1.5m/蓝色挡板时漏检),
+     //   原始误差在0与饱和值之间跳变,kd=1.3在跳变上打尖峰,造成63°↔117°来回画龙。
+     //   alpha=0.35:新误差占35%,兼顾响应速度与平滑。
+     last_pid_error = error;
+     if (!ema_initialized) {
+         ema_error = error;
+         ema_initialized = true;
+     } else {
+         ema_error = 0.35 * error + 0.65 * ema_error;
+     }
+     angle = pid.PIDPositional(ema_error);                    // PID位置式输出舵机修正量
      handleNormalMode(angle);                                 // 组合成最终舵机角与速度
  }
  
@@ -606,11 +669,14 @@
      double current_angle = twist.angular.z;
      
      // 打印状态信息
-     RCLCPP_INFO(this->get_logger(), 
-                 "=== 状态监控 === 模式: %s | 速度: %.0f | 舵机角度: %.1f° | 时间: %.1fs", 
-                 current_mode.c_str(), 
-                 current_speed, 
+     // ★新增:输出原始误差与EMA误差,跑圈后可直接从日志判断是"检测跳变"还是"控制过猛"
+     RCLCPP_INFO(this->get_logger(),
+                 "=== 状态监控 === 模式: %s | 速度: %.0f | 舵机角度: %.1f° | 误差: %.1f (EMA: %.1f) | 时间: %.1fs",
+                 current_mode.c_str(),
+                 current_speed,
                  current_angle,
+                 last_pid_error,
+                 ema_error,
                  this->now().seconds());
  }
  

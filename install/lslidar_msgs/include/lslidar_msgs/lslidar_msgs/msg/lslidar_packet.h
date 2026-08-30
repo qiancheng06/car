@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/build/lslidar_msgs/rosidl_generator_c/lslidar_msgs/msg/lslidar_packet.h

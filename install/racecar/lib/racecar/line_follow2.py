@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/src/racecar/scripts/line_follow2.py

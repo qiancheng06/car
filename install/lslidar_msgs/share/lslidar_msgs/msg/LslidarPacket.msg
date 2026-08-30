@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/src/lslidar_msgs/msg/LslidarPacket.msg

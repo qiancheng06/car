@@ -7,9 +7,9 @@ driver input ``/racecar_driver/cmd_pwm`` uses a ``Twist`` envelope whose fields 
 * ``linear.x``: motor PWM (1500 is neutral)
 * ``angular.z``: steering angle in degrees (90 is nominally centered)
 
-This node is the only bridge between those two conventions.  It also adds an
-arm switch, a software stop, finite-value checks, command clamping and a
-command timeout.  The driver has a second watchdog as the final safety layer.
+This node is the only bridge between those two conventions.  It also adds a
+software stop, finite-value checks, command clamping and a command timeout.
+The driver has a second watchdog as the final safety layer.
 """
 
 from __future__ import annotations
@@ -32,7 +32,6 @@ class NavCmdAdapter(Node):
 
         self.declare_parameter("input_topic", "/cmd_vel")
         self.declare_parameter("output_topic", "/racecar_driver/cmd_pwm")
-        self.declare_parameter("arm_topic", "/nav/arm")
         self.declare_parameter("estop_topic", "/nav/estop")
         self.declare_parameter("state_topic", "/nav/adapter_state")
 
@@ -74,9 +73,6 @@ class NavCmdAdapter(Node):
                 "angular_input_mode must be 'yaw_rate' or 'steering_angle'"
             )
 
-        # Deliberately no auto-arm parameter: every process start requires a
-        # new, explicit /nav/arm message from the operator.
-        self.armed = False
         self.estop = False
         self.latest_cmd: Optional[Twist] = None
         self.latest_cmd_time: Optional[float] = None
@@ -88,9 +84,6 @@ class NavCmdAdapter(Node):
             String, str(self.get_parameter("state_topic").value), 10
         )
         self.create_subscription(Twist, self.input_topic, self._cmd_callback, 10)
-        self.create_subscription(
-            Bool, str(self.get_parameter("arm_topic").value), self._arm_callback, 10
-        )
         self.create_subscription(
             Bool,
             str(self.get_parameter("estop_topic").value),
@@ -104,7 +97,7 @@ class NavCmdAdapter(Node):
         self._publish_stop()
         self._publish_state(force=True)
         self.get_logger().info(
-            "Nav command adapter ready: %s -> %s; explicit arm required; mode=%s"
+            "Nav command adapter ready: %s -> %s; mode=%s"
             % (self.input_topic, self.output_topic, self.angular_input_mode)
         )
 
@@ -133,34 +126,15 @@ class NavCmdAdapter(Node):
         self.latest_cmd = msg
         self.latest_cmd_time = time.monotonic()
 
-    def _arm_callback(self, msg: Bool) -> None:
-        if msg.data and self.estop:
-            self.get_logger().warning("Arm request ignored while software stop is active")
-            return
-        requested = bool(msg.data)
-        if requested and not self.armed:
-            # A command received before the arm edge must never move the car.
-            self.latest_cmd = None
-            self.latest_cmd_time = None
-        if not requested:
-            self.latest_cmd = None
-            self.latest_cmd_time = None
-        self.armed = requested
-        self.get_logger().info("Navigation output %s" % ("ARMED" if self.armed else "DISARMED"))
-        if not self.armed:
-            self._publish_stop()
-        self._publish_state(force=True)
-
     def _estop_callback(self, msg: Bool) -> None:
         if msg.data:
             self.estop = True
-            self.armed = False
             self.latest_cmd = None
             self.latest_cmd_time = None
-            self.get_logger().error("SOFTWARE STOP asserted; re-arm is required after release")
+            self.get_logger().error("SOFTWARE STOP asserted; driver output disabled")
         else:
             self.estop = False
-            self.get_logger().warning("Software stop released; output remains disarmed")
+            self.get_logger().warning("Software stop released; driver output re-enabled")
         self._publish_stop()
         self._publish_state(force=True)
 
@@ -235,11 +209,9 @@ class NavCmdAdapter(Node):
     def _current_state(self) -> str:
         if self.estop:
             return "ESTOP"
-        if not self.armed:
-            return "DISARMED"
         if not self._command_is_fresh():
             return "COMMAND_TIMEOUT"
-        return "ARMED"
+        return "ACTIVE"
 
     def _publish_state(self, force: bool = False) -> None:
         state = self._current_state()
@@ -257,7 +229,7 @@ class NavCmdAdapter(Node):
         self.state_pub.publish(msg)
 
     def _timer_callback(self) -> None:
-        if self._current_state() != "ARMED":
+        if self._current_state() != "ACTIVE":
             self._publish_stop()
         else:
             self.output_pub.publish(self._convert(self.latest_cmd))

@@ -35,8 +35,6 @@ cleanup() {
   fi
   cleanup_started=true
   trap - EXIT INT TERM HUP
-  timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-    '{data: false}' >/dev/null 2>&1 || true
   local pid
   for pid in "${PIDS[@]:-}"; do
     if kill -0 "$pid" 2>/dev/null; then
@@ -97,7 +95,7 @@ if ! flock -w 15 8; then
 fi
 
 if ! node_exists /racecar_driver; then
-  echo "Starting hardware for mapping (driver remains DISARMED)..."
+  echo "Starting hardware for mapping..."
   setsid ros2 launch racecar Run_car.launch.py \
     enable_legacy_pwm_input:=true \
     enable_legacy_normalized_input:=false \
@@ -117,11 +115,6 @@ if ! node_exists /racecar_driver; then
   fi
 else
   echo "Reusing the already running hardware stack; no second serial driver will be started."
-  if ! timeout 3 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-      '{data: false}' >/dev/null 2>&1; then
-    echo "ERROR: unable to force the reused chassis driver into DISARMED state." >&2
-    exit 1
-  fi
   if ! legacy_all_mode=$(driver_param enable_legacy_inputs) || \
     ! legacy_pwm_mode=$(driver_param enable_legacy_pwm_input) || \
     ! legacy_normalized_mode=$(driver_param enable_legacy_normalized_input) || \
@@ -194,8 +187,7 @@ fi
 
 echo "Mapping is ready. In another terminal use: bash save.sh"
 echo "Default output: $HOME/racecar_maps/ai_map.yaml"
-echo "The chassis is DISARMED. For a lifted-wheel/manual test, arm with:"
-echo "  ros2 topic pub --once /nav/arm std_msgs/msg/Bool '{data: true}'"
+echo "The chassis is ready for a lifted-wheel/manual test."
 echo "Then start the low-speed keyboard controller in another terminal:"
 echo "  ros2 run racecar racecar_teleop.py"
 echo "Or use the all-in-one workflow next time: bash mapping-one.sh"

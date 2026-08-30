@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter, deque
-from typing import Deque, Optional
+from typing import Deque, Dict, Optional
 
 import cv2
 import numpy as np
@@ -99,3 +99,71 @@ def classify_cone_color(
     if weakest > 0.0 and strongest / weakest < dominance_ratio:
         return "unknown"
     return "red" if red_ratio > blue_ratio else "blue"
+
+
+def detect_yellow_band(
+    frame_bgr: np.ndarray,
+    roi_top_ratio: float = 0.45,
+    roi_bottom_ratio: float = 1.0,
+    min_area_ratio: float = 0.012,
+    min_width_ratio: float = 0.08,
+    hue_min: int = 18,
+    hue_max: int = 38,
+    saturation_min: int = 80,
+    value_min: int = 80,
+) -> Dict[str, float | bool]:
+    """Detect a yellow track band in the lower camera ROI.
+
+    ``error`` is the normalized horizontal offset from image center, positive
+    when the detected band is to the right. The detector is model-independent
+    so CPU YOLO and Atlas NPU deployments use the same tracking signal.
+    """
+    result: Dict[str, float | bool] = {
+        "detected": False,
+        "error": 0.0,
+        "center_x_ratio": 0.5,
+        "area_ratio": 0.0,
+        "width_ratio": 0.0,
+    }
+    if frame_bgr is None or frame_bgr.size == 0 or frame_bgr.ndim != 3:
+        return result
+
+    height, width = frame_bgr.shape[:2]
+    if height < 8 or width < 8:
+        return result
+    top = max(0, min(height - 1, int(height * roi_top_ratio)))
+    bottom = max(top + 1, min(height, int(height * roi_bottom_ratio)))
+    roi = frame_bgr[top:bottom, :]
+    hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+    mask = cv2.inRange(
+        hsv,
+        np.array((hue_min, saturation_min, value_min), dtype=np.uint8),
+        np.array((hue_max, 255, 255), dtype=np.uint8),
+    )
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if not contours:
+        return result
+
+    contour = max(contours, key=cv2.contourArea)
+    area = float(cv2.contourArea(contour))
+    area_ratio = area / float(max(1, roi.shape[0] * roi.shape[1]))
+    _, _, box_width, _ = cv2.boundingRect(contour)
+    width_ratio = box_width / float(width)
+    result["area_ratio"] = area_ratio
+    result["width_ratio"] = width_ratio
+    if area_ratio < min_area_ratio or width_ratio < min_width_ratio:
+        return result
+
+    moments = cv2.moments(contour)
+    if moments["m00"] <= 0.0:
+        return result
+    center_x_ratio = float(moments["m10"] / moments["m00"]) / float(width)
+    result.update(
+        detected=True,
+        center_x_ratio=center_x_ratio,
+        error=center_x_ratio - 0.5,
+    )
+    return result

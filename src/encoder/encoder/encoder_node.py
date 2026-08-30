@@ -118,7 +118,8 @@ class EncoderNode(Node):
         direction = DueDirData(datahex)
         
         # �������ٶ�
-        Vel = 3.57 * angle_v * C / 1024.0 / 0.02 * self.k * 0.25 *1.03
+        Vel = 3.57 * angle_v * C / 1024.0 / 0.02 * self.k * 0.25 *0.86
+        # ★ 里程校准3：odom报1.45m实际1.43m → 0.9862，0.87→0.86
         # Vel = 3.57 * angle_v * C / 1024.0 / 0.02 * self.k * 0.25 *1.05    #encoder_imu 合理
 
         # ������̼�����

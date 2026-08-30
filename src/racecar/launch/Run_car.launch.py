@@ -153,14 +153,12 @@ def generate_launch_description():
             name='racecar_driver',
             output='screen',
             parameters=[{
-                'default_armed': False,
                 'enable_legacy_inputs': False,
                 'enable_legacy_pwm_input': ParameterValue(
                     legacy_pwm_input, value_type=bool),
                 'enable_legacy_normalized_input': ParameterValue(
                     legacy_normalized_input, value_type=bool),
                 'command_topic': '/racecar_driver/cmd_pwm',
-                'arm_topic': '/nav/arm',
                 'estop_topic': '/nav/estop',
                 'min_throttle_pwm': ParameterValue(
                     min_throttle_pwm, value_type=float),

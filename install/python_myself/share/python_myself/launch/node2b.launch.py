@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/build/python_myself/launch/node2b.launch.py

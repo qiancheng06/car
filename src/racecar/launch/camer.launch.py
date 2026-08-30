@@ -12,6 +12,9 @@ def generate_launch_description():
     video_device = LaunchConfiguration('video_device')
 
     # 启动 usb_cam 节点
+    # respawn: 8月29日试跑中 usb_cam 崩过一次("Invalid v4l2 format", mjpeg 解码),
+    # 之后 /image_raw 断流导致视觉全程致盲——必须自动拉起。
+    # YUYV: 该模组 YUYV 640x480@30 带宽 ~18MB/s,USB2.0 扛得住,绕开 mjpeg 解码崩溃路径。
     usb_cam_node = Node(
         package='usb_cam',
         executable='usb_cam_node_exe',
@@ -22,11 +25,12 @@ def generate_launch_description():
             'io_method': 'mmap',
             'image_width': 640,
             'image_height': 480,
-            # The installed Camera DSA advertises MJPEG 640x480@30 FPS.
-            'pixel_format': 'mjpeg2rgb',
+            'pixel_format': 'yuyv2rgb',
             'av_device_format': 'YUV422P',
             'frame_id': 'camera_link'
         }],
+        respawn=True,
+        respawn_delay=2.0,
         output='screen'
     )
 

@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/build/two_lap_control/launch/car_go.launch.py

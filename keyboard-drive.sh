@@ -36,8 +36,6 @@ cleanup() {
   cleanup_started=true
   trap - EXIT INT TERM HUP
 
-  timeout 1 ros2 topic pub --once /nav/arm std_msgs/msg/Bool \
-    '{data: false}' >/dev/null 2>&1 || true
   if [[ -n "$driver_pid" ]]; then
     kill -TERM -- "-$driver_pid" 2>/dev/null || kill -TERM "$driver_pid" 2>/dev/null || true
     for _ in {1..20}; do
@@ -53,7 +51,6 @@ cleanup() {
 trap cleanup EXIT INT TERM HUP
 
 setsid ros2 run racecar_driver racecar_driver_node --ros-args \
-  -p default_armed:=false \
   -p enable_legacy_inputs:=false \
   -p enable_legacy_pwm_input:=true \
   -p enable_legacy_normalized_input:=false \

@@ -1,1 +1,0 @@
-/home/davinci-mini/racecar/src/hipnuc_imu/src/ch_serial.c

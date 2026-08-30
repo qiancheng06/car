@@ -32,9 +32,7 @@ public:
 
     // Only the safety adapter publishes this final actuator command topic.
     this->declare_parameter<std::string>("command_topic", "/racecar_driver/cmd_pwm");
-    this->declare_parameter<std::string>("arm_topic", "/nav/arm");
     this->declare_parameter<std::string>("estop_topic", "/nav/estop");
-    this->declare_parameter<bool>("default_armed", false);
     this->declare_parameter<bool>("enable_legacy_inputs", false);
     this->declare_parameter<bool>("enable_legacy_pwm_input", false);
     this->declare_parameter<bool>("enable_legacy_normalized_input", false);
@@ -58,9 +56,7 @@ public:
     baud_rate_ = this->get_parameter("baud_rate").as_int();
     command_timeout_s_ = this->get_parameter("command_timeout_s").as_double();
     command_topic_ = this->get_parameter("command_topic").as_string();
-    arm_topic_ = this->get_parameter("arm_topic").as_string();
     estop_topic_ = this->get_parameter("estop_topic").as_string();
-    armed_ = this->get_parameter("default_armed").as_bool();
     const bool enable_all_legacy = this->get_parameter("enable_legacy_inputs").as_bool();
     enable_legacy_pwm_input_ =
       enable_all_legacy || this->get_parameter("enable_legacy_pwm_input").as_bool();
@@ -94,9 +90,6 @@ public:
       throw std::runtime_error("Unable to send the initial neutral chassis command");
     }
 
-    arm_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
-      arm_topic_, 10,
-      std::bind(&RacecarDriver::armCallback, this, std::placeholders::_1));
     estop_subscription_ = this->create_subscription<std_msgs::msg::Bool>(
       estop_topic_, 10,
       std::bind(&RacecarDriver::estopCallback, this, std::placeholders::_1));
@@ -123,9 +116,8 @@ public:
 
     RCLCPP_INFO(
       this->get_logger(),
-      "Racecar driver ready on %s at %d baud; command=%s; armed=%s; watchdog=%.2f s",
-      serial_port_.c_str(), baud_rate_, command_topic_.c_str(), armed_ ? "true" : "false",
-      command_timeout_s_);
+      "Racecar driver ready on %s at %d baud; command=%s; watchdog=%.2f s",
+      serial_port_.c_str(), baud_rate_, command_topic_.c_str(), command_timeout_s_);
   }
 
   ~RacecarDriver() override
@@ -297,10 +289,7 @@ private:
   void rejectAndStop(const std::string & reason)
   {
     command_received_ = false;
-    if (!stopNow()) {
-      armed_ = false;
-      serial_fault_ = true;
-    }
+    (void)stopNow();
     RCLCPP_ERROR(this->get_logger(), "Rejected chassis command: %s", reason.c_str());
   }
 
@@ -323,16 +312,10 @@ private:
         static_cast<uint16_t>(std::lround(throttle_pwm)),
         static_cast<uint16_t>(std::lround(steering_pwm))))
     {
-      // Never resume automatically after a serial failure.  A fresh explicit
-      // arm request must first prove that a neutral frame can be written.
-      armed_ = false;
       command_received_ = false;
-      serial_fault_ = true;
       watchdog_reported_ = false;
       (void)stopNow();
-      RCLCPP_ERROR(
-        this->get_logger(),
-        "Chassis serial fault latched; a successful explicit re-arm is required");
+      RCLCPP_ERROR(this->get_logger(), "Chassis serial write failed; holding neutral");
       return;
     }
     last_command_time_ = std::chrono::steady_clock::now();
@@ -347,12 +330,8 @@ private:
 
   bool outputEnabled()
   {
-    if (!armed_ || estop_ || serial_fault_) {
-      if (!stopNow()) {
-        armed_ = false;
-        command_received_ = false;
-        serial_fault_ = true;
-      }
+    if (estop_) {
+      (void)stopNow();
       return false;
     }
     return true;
@@ -391,44 +370,16 @@ private:
     sendMotionCommand(throttle_pwm, steering_pwm);
   }
 
-  void armCallback(const std_msgs::msg::Bool::SharedPtr msg)
-  {
-    if (msg->data && estop_) {
-      RCLCPP_WARN(this->get_logger(), "Arm request ignored while software stop is active");
-      return;
-    }
-
-    // Keep output disabled while proving that the serial path accepts neutral.
-    armed_ = false;
-    command_received_ = false;
-    watchdog_reported_ = false;
-
-    if (!stopNow()) {
-      serial_fault_ = true;
-      RCLCPP_ERROR(this->get_logger(), "Arm request rejected: neutral serial write failed");
-      return;
-    }
-
-    if (msg->data) {
-      serial_fault_ = false;
-      armed_ = true;
-    }
-    RCLCPP_INFO(this->get_logger(), "Driver output %s", armed_ ? "ARMED" : "DISARMED");
-  }
-
   void estopCallback(const std_msgs::msg::Bool::SharedPtr msg)
   {
     estop_ = msg->data;
-    armed_ = false;
     command_received_ = false;
     watchdog_reported_ = false;
-    if (!stopNow()) {
-      serial_fault_ = true;
-    }
+    (void)stopNow();
     if (estop_) {
-      RCLCPP_ERROR(this->get_logger(), "SOFTWARE STOP asserted; driver is disarmed");
+      RCLCPP_ERROR(this->get_logger(), "SOFTWARE STOP asserted; driver output disabled");
     } else {
-      RCLCPP_WARN(this->get_logger(), "Software stop released; explicit re-arm is required");
+      RCLCPP_WARN(this->get_logger(), "Software stop released; driver output re-enabled");
     }
   }
 
@@ -438,14 +389,10 @@ private:
     const double age = std::chrono::duration<double>(now - last_command_time_).count();
     const bool stale = !command_received_ || age > command_timeout_s_;
 
-    if (!armed_ || estop_ || serial_fault_ || stale) {
+    if (estop_ || stale) {
       // Repeat neutral at 20 Hz; one lost serial frame must not leave stale throttle active.
-      if (!stopNow()) {
-        armed_ = false;
-        command_received_ = false;
-        serial_fault_ = true;
-      }
-      if (armed_ && !estop_ && stale && !watchdog_reported_) {
+      (void)stopNow();
+      if (!estop_ && stale && !watchdog_reported_) {
         RCLCPP_WARN(
           this->get_logger(),
           "Command watchdog is holding neutral (last command age %.2f s)", age);
@@ -457,13 +404,11 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr command_subscription_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr normalized_subscription_;
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr legacy_pwm_subscription_;
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr arm_subscription_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr estop_subscription_;
   rclcpp::TimerBase::SharedPtr watchdog_timer_;
 
   std::string serial_port_;
   std::string command_topic_;
-  std::string arm_topic_;
   std::string estop_topic_;
   int baud_rate_{38400};
   int serial_fd_{-1};
@@ -480,13 +425,11 @@ private:
   double teleop_degree_to_pwm_{2000.0 / 180.0};
 
   std::chrono::steady_clock::time_point last_command_time_;
-  bool armed_{false};
   bool estop_{false};
   bool enable_legacy_pwm_input_{false};
   bool enable_legacy_normalized_input_{false};
   bool command_received_{false};
   bool watchdog_reported_{false};
-  bool serial_fault_{false};
 };
 
 int main(int argc, char ** argv)

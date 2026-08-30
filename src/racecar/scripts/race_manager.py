@@ -16,6 +16,7 @@ PWM-style Twist values to /teleop_cmd_vel.
 
 from __future__ import annotations
 
+import json
 import math
 import os
 import subprocess
@@ -39,6 +40,7 @@ class RaceState(str, Enum):
     WAITING_FOR_ODOM = "WAITING_FOR_ODOM"
     LAP1_MAPPING = "LAP1_MAPPING"
     LAP2_FAST = "LAP2_FAST"
+    YELLOW_BAND_TRACK = "YELLOW_BAND_TRACK"
     TRAFFIC_STOP = "TRAFFIC_STOP"
     PARKING_APPROACH = "PARKING_APPROACH"
     PARKING_TURN = "PARKING_TURN"
@@ -113,6 +115,21 @@ class RaceManager(Node):
         self.declare_parameter("template_a_path", "")
         self.declare_parameter("template_b_path", "")
 
+        # Yellow tape band visual following (the tape-only track section).
+        # The yellow_band_detector publishes JSON {"detected", "error", ...} on
+        # yellow_band_topic; "error" is the normalized horizontal offset of the
+        # band from the image center (positive = band on the right).
+        self.declare_parameter("enable_yellow_band", True)
+        self.declare_parameter("yellow_band_topic", "/racecar/yellow_band")
+        self.declare_parameter("yellow_enter_min_frames", 4)
+        self.declare_parameter("yellow_exit_lost_s", 1.5)
+        self.declare_parameter("yellow_data_timeout_s", 0.6)
+        self.declare_parameter("yellow_max_duration_s", 25.0)  # safety valve; 0 = unlimited
+        self.declare_parameter("yellow_steer_gain_pwm", 45.0)  # PWM delta per unit error
+        self.declare_parameter("yellow_speed_pwm", 1526.0)
+        self.declare_parameter("yellow_steer_gain_norm", 1.6)  # rad/s per unit error
+        self.declare_parameter("yellow_speed_norm", 0.18)
+
         # Map saving at the lap transition.
         self.declare_parameter("save_map_on_lap1_complete", True)
         self.declare_parameter("map_save_path", "/home/davinci-mini/racecar/src/racecar/map/competition_map")
@@ -135,6 +152,13 @@ class RaceManager(Node):
         self.template_a = self.load_template("template_a_path")
         self.template_b = self.load_template("template_b_path")
 
+        # Yellow band tracking state.
+        self.yellow_error = 0.0
+        self.yellow_hit_count = 0
+        self.yellow_last_seen: Optional[float] = None
+        self.yellow_last_msg: Optional[float] = None
+        self.yellow_track_started: Optional[float] = None
+
         self.bridge = CvBridge()
 
         self.cmd_sub = self.create_subscription(
@@ -156,6 +180,12 @@ class RaceManager(Node):
             Bool,
             str(self.get_parameter("red_light_topic").value),
             self.red_light_callback,
+            5,
+        )
+        self.yellow_band_sub = self.create_subscription(
+            String,
+            str(self.get_parameter("yellow_band_topic").value),
+            self.yellow_band_callback,
             5,
         )
 
@@ -243,9 +273,14 @@ class RaceManager(Node):
                 self.get_parameter("pwm_lap2_speed" if self.lap_number >= 2 else "pwm_lap1_speed").value
             )
             # Preserve the upstream steering but standardize speed per lap.
-            if msg.linear.x > 1490.0:
+            # ★修复:上游 laser_go 的无锥桶"停车等待"发 1500,原来 >1490 一律抬到圈速,
+            #   停车指令被放大成全速直冲。改为只有 >=1510 的明确行驶指令才标准化,
+            #   低于阈值一律按停车处理(1500)。
+            if msg.linear.x >= 1510.0:
                 msg.linear.x = desired
-            msg.linear.x = min(float(self.get_parameter("pwm_max_speed").value), max(1500.0, msg.linear.x))
+                msg.linear.x = min(float(self.get_parameter("pwm_max_speed").value), max(1500.0, msg.linear.x))
+            else:
+                msg.linear.x = float(self.get_parameter("pwm_stop_speed").value)
             msg.angular.z = min(
                 float(self.get_parameter("pwm_max_steer").value),
                 max(float(self.get_parameter("pwm_min_steer").value), msg.angular.z),
@@ -333,6 +368,65 @@ class RaceManager(Node):
         else:
             self.red_frame_count = 0
 
+    def yellow_band_callback(self, msg: String) -> None:
+        if not bool(self.get_parameter("enable_yellow_band").value):
+            return
+        try:
+            payload = json.loads(msg.data)
+        except (TypeError, ValueError):
+            return
+        now = self.now_s()
+        self.yellow_last_msg = now
+        if bool(payload.get("detected", False)):
+            self.yellow_hit_count += 1
+            self.yellow_last_seen = now
+            error = payload.get("error")
+            if error is None:
+                error = float(payload.get("center_x_ratio", 0.5)) - 0.5
+            self.yellow_error = max(-0.5, min(0.5, float(error)))
+        else:
+            self.yellow_hit_count = 0
+
+    def yellow_band_active(self) -> bool:
+        """True while the tape band should be followed (entry hysteresis in,
+        lost-timeout out). Data staleness counts as lost."""
+        if not bool(self.get_parameter("enable_yellow_band").value):
+            return False
+        now = self.now_s()
+        if self.yellow_last_msg is None or now - self.yellow_last_msg > float(
+            self.get_parameter("yellow_data_timeout_s").value
+        ):
+            return False
+        if self.state == RaceState.YELLOW_BAND_TRACK:
+            if self.yellow_track_started is not None:
+                max_duration = float(self.get_parameter("yellow_max_duration_s").value)
+                if max_duration > 0.0 and now - self.yellow_track_started > max_duration:
+                    return False
+            if self.yellow_last_seen is None:
+                return False
+            return now - self.yellow_last_seen <= float(self.get_parameter("yellow_exit_lost_s").value)
+        return self.yellow_hit_count >= int(self.get_parameter("yellow_enter_min_frames").value)
+
+    def yellow_band_cmd(self) -> Twist:
+        msg = Twist()
+        error = self.yellow_error
+        if self.command_mode == "pwm":
+            # PWM steering: above neutral turns right, below turns left, and a
+            # band on the right (error > 0) requires steering right.
+            neutral = float(self.get_parameter("pwm_neutral_steer").value)
+            steer = neutral + float(self.get_parameter("yellow_steer_gain_pwm").value) * error
+            msg.angular.z = min(
+                float(self.get_parameter("pwm_max_steer").value),
+                max(float(self.get_parameter("pwm_min_steer").value), steer),
+            )
+            msg.linear.x = float(self.get_parameter("yellow_speed_pwm").value)
+        else:
+            # Normalized angular.z: positive is a left turn, so invert the error.
+            steer = -float(self.get_parameter("yellow_steer_gain_norm").value) * error
+            msg.angular.z = max(-1.0, min(1.0, steer))
+            msg.linear.x = float(self.get_parameter("yellow_speed_norm").value)
+        return msg
+
     def image_callback(self, msg: Image) -> None:
         if not bool(self.get_parameter("enable_vision").value):
             return
@@ -395,7 +489,7 @@ class RaceManager(Node):
             self.parking_vote_count = 1
         if (
             self.lap_number >= 2
-            and self.state == RaceState.LAP2_FAST
+            and self.state in (RaceState.LAP2_FAST, RaceState.YELLOW_BAND_TRACK)
             and self.parking_vote_count >= int(self.get_parameter("parking_sign_min_frames").value)
         ):
             self.transition(RaceState.PARKING_APPROACH)
@@ -413,7 +507,10 @@ class RaceManager(Node):
             self.cmd_pub.publish(self.stop_cmd())
             return
 
-        if self.state in (RaceState.LAP1_MAPPING, RaceState.LAP2_FAST) and self.red_light_should_stop():
+        if (
+            self.state in (RaceState.LAP1_MAPPING, RaceState.LAP2_FAST, RaceState.YELLOW_BAND_TRACK)
+            and self.red_light_should_stop()
+        ):
             self.previous_drive_state = self.state
             self.last_red_stop_time = self.now_s()
             light = String()
@@ -445,6 +542,22 @@ class RaceManager(Node):
 
         if self.state in (RaceState.FINISHED, RaceState.EMERGENCY_STOP):
             self.cmd_pub.publish(self.stop_cmd())
+            return
+
+        if self.state in (RaceState.LAP1_MAPPING, RaceState.LAP2_FAST) and self.yellow_band_active():
+            self.previous_drive_state = self.state
+            self.yellow_track_started = self.now_s()
+            self.get_logger().info(
+                f"Yellow band acquired (error={self.yellow_error:+.3f}); visual following engaged."
+            )
+            self.transition(RaceState.YELLOW_BAND_TRACK)
+
+        if self.state == RaceState.YELLOW_BAND_TRACK:
+            if not self.yellow_band_active():
+                self.get_logger().info("Yellow band lost; returning to lidar following.")
+                self.transition(self.previous_drive_state)
+            else:
+                self.cmd_pub.publish(self.yellow_band_cmd())
             return
 
         self.cmd_pub.publish(self.speed_limited_cmd(self.latest_cmd))
