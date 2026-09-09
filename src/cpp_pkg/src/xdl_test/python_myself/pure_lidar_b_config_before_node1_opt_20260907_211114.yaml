@@ -1,0 +1,78 @@
+pure_lidar_b_node:
+  ros__parameters:
+    # Topics used by the existing racecar package.
+    scan_topic: /scan
+    imu_topic: /IMU_data
+    odom_topic: /odom_combined
+    cmd_topic: /teleop_cmd_vel
+    filtered_scan_topic: /pure_lidar/scan_filtered
+    publish_filtered_scan: true
+
+    # A frame is usable only when it contains enough finite in-range returns.
+    min_valid_scan_points: 30
+    min_valid_scan_ratio: 0.03
+
+    # Safety: false means the node only publishes neutral PWM.
+    enable_motion: false
+    control_hz: 20.0
+
+    # LaserScan geometry and cluster extraction.
+    min_range: 0.15
+    max_range: 8.0
+    max_lateral: 2.6
+    max_forward: 5.0
+    cluster_gap: 0.32
+    min_cluster_points: 2
+    max_cluster_points: 80
+    max_cluster_radius: 0.75
+    side_deadband: 0.12
+    track_width: 1.50
+    track_width_tolerance: 0.85
+    near_lookahead: 0.90
+    far_lookahead: 2.30
+    side_min_y: 0.30
+    side_max_y: 3.80
+
+    # Legacy driver output: 1500 neutral, 90 degree steering center.
+    pwm_neutral: 1500.0
+    pwm_fast: 1528.0
+    pwm_slow: 1518.0
+    steer_center: 90.0
+    steer_min: 35.0
+    steer_max: 145.0
+
+    # Steering and safety tuning.
+    cte_gain: 34.0
+    heading_gain: 42.0
+    gyro_damping: 1.2
+    steer_rate_limit: 90.0
+    steer_smoothing: 0.65
+    front_width: 0.38
+    front_stop_distance: 0.42
+    front_slow_distance: 0.85
+    scan_timeout: 0.35
+    imu_timeout: 0.60
+    odom_timeout: 0.80
+    allow_one_side: true
+    one_side_speed_scale: 0.55
+    no_boundary_stop: true
+    # Track B cone-free yellow V section.
+    # Assumption: start from the lower-left start box, travel to the right,
+    # go around the right U-turn, then enter the yellow section from right to left.
+    track_mode: B
+    b_gap_enabled: true
+    b_gap_min_total_distance: 12.0
+    b_gap_max_total_distance: 28.0
+    b_gap_min_heading_change_deg: 120.0
+    b_gap_loss_scans: 3
+    b_gap_first_length: 3.06
+    b_gap_second_length: 3.06
+    b_gap_first_yaw_deg: 22.5
+    # If the car turns toward the wrong side at the yellow entrance, change to -1.0.
+    b_gap_direction: 1.0
+    b_gap_reacquire_distance: 5.25
+    b_gap_max_distance: 7.20
+    b_gap_pwm: 1516.0
+    b_gap_yaw_gain: 58.0
+    b_gap_gyro_gain: 4.0
+    b_gap_steer_limit: 34.0

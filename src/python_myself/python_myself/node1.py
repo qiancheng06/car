@@ -28,6 +28,15 @@ def python_angle_to_angular_z(python_angle):
     return normalized
 
 
+# ★ 驱动 legacy PWM 模式：throttle=linear.x∈[1500,1550]，steering=angular.z∈[30,145]（0~180度）
+PWM_NEUTRAL = 1500.0     # 停车（中性）
+PWM_SPEED   = 1525.0     # 直道速度
+PWM_SLOW    = 1522.0     # 弯道减速
+ANGLE_CENTER = 90.0      # 直行舵角
+ANGLE_MIN   = 30.0
+ANGLE_MAX   = 145.0
+
+
 class BucketPoint:
     def __init__(self, x=0.0, y=0.0):
         self.x = x
@@ -37,7 +46,7 @@ class BucketPoint:
 class ServoPID:
     def __init__(self):
         self.lidar_angle = 0.0
-        self.P = 0.48
+        self.P = 0.8
         self.D = 0.1
         self.I = 0.0
         self.angle_integral_error = 0.0
@@ -79,7 +88,7 @@ class LidarCoordinateControlNode(Node):
         self.roi_y_max = 3.0                  # ROI ǰ��
         self.max_left_distance = 1.5          # ROI ���
         self.min_right_distance = 1.5         # ROI �ҽ�
-        self.steer_gain = 20.0                # �������Ŵ���
+        self.steer_gain = 60.0                # �������Ŵ���
         self.steer_threshold_slow_down = 20.0 # ��ת�Ǽ�����ֵ���ȣ�
 
         self.get_logger().info("Lidar coordinate control node started (Bucket algorithm, pure lidar)")
@@ -96,8 +105,8 @@ class LidarCoordinateControlNode(Node):
 
         if scan_resolution == 0 or all(math.isnan(r) or math.isinf(r) for r in ranges):
             self.get_logger().warn("Radar ranges is empty or invalid! Force stop temporarily.")
-            self.cmd_vel.linear.x = 0.0
-            self.cmd_vel.angular.z = python_angle_to_angular_z(base_angle)
+            self.cmd_vel.linear.x = PWM_NEUTRAL
+            self.cmd_vel.angular.z = ANGLE_CENTER
             return
 
         red_points = []
@@ -147,8 +156,8 @@ class LidarCoordinateControlNode(Node):
         blue_count = len(blue_points)
         error_count = min(red_count, blue_count)
 
-        angle_output = python_angle_to_angular_z(base_angle)
-        speed_output = self.default_linear_speed
+        angle_output = ANGLE_CENTER
+        speed_output = PWM_SPEED
 
         if error_count > 0:
             weighted_error = 0.0
@@ -164,16 +173,17 @@ class LidarCoordinateControlNode(Node):
 
             error = (weighted_error / weight_sum) * self.steer_gain if weight_sum > 0.0 else 0.0
             angle_pid = self.servo.servo_pid_control(error)
-            final_angle = 90.0 + angle_pid
+            final_angle = ANGLE_CENTER + angle_pid
 
             if abs(angle_pid) >= self.steer_threshold_slow_down:
-                speed_output = max(speed_output - 0.05, 0.1)
+                speed_output = PWM_SLOW
 
-            final_angle = min(max(final_angle, 10.0), 170.0)
-            angle_output = python_angle_to_angular_z(final_angle)
+            # ★ 驱动 legacy PWM：直接发布 0~180 度舵角
+            final_angle = min(max(final_angle, ANGLE_MIN), ANGLE_MAX)
+            angle_output = final_angle
         else:
-            self.cmd_vel.linear.x = 0.0
-            self.cmd_vel.angular.z = python_angle_to_angular_z(base_angle)
+            self.cmd_vel.linear.x = PWM_NEUTRAL
+            self.cmd_vel.angular.z = ANGLE_CENTER
             self.get_logger().info("NO BUCKET")
             return
 
@@ -254,8 +264,8 @@ def main(args=None):
         rclpy.spin(node)
     except KeyboardInterrupt:
         stop_cmd = Twist()
-        stop_cmd.linear.x = 0.0
-        stop_cmd.angular.z = python_angle_to_angular_z(base_angle)
+        stop_cmd.linear.x = PWM_NEUTRAL
+        stop_cmd.angular.z = ANGLE_CENTER
         node.publisher_twist.publish(stop_cmd)
         node.get_logger().info("Node stopped by user (KeyboardInterrupt) - Robot forced stop.")
     finally:

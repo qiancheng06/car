@@ -1,0 +1,557 @@
+#!/usr/bin/env python3
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Twist
+import math
+import numpy as np
+
+
+start_angle = 0
+end_angle = 252
+L_max_Angle = 63
+R_max_Angle = 189
+number_fitin = 2.8
+
+lidar_forward = 1.22
+error_range = 0.15
+distance_range = [0.2, 1.8]
+base_angle = 90.0
+
+def python_angle_to_angular_z(python_angle):
+    base_angle = 90.0
+    max_angle_range = 45.0
+    
+    deviation = python_angle - base_angle
+    normalized = deviation / max_angle_range
+    normalized = max(min(normalized, 1.0), -1.0)
+    return normalized
+
+
+# ★ 驱动 legacy PWM 模式：throttle=linear.x∈[1500,1550]，steering=angular.z∈[30,145]（0~180度）
+PWM_NEUTRAL = 1500.0     # 停车（中性）
+PWM_SPEED   = 1525.0     # 直道速度（测试降速）
+PWM_SLOW    = 1522.0     # 弯道减速
+ANGLE_CENTER = 90.0      # 直行舵角
+ANGLE_MIN   = 30.0
+ANGLE_MAX   = 145.0
+
+# 特殊弯道只包在正常雷达循迹外层，不改变已经验证过的循迹参数。
+# 正数表示左转，负数表示右转；当前赛道顺序为先左回头弯，再左直角弯。
+DEFAULT_SPECIAL_TURN_SEQUENCE = [170.0, 88.0]
+PWM_SPECIAL_TURN = 1518.0
+# 特殊弯入口保持运动并先建立较强转向，避免到端点停车后无法切入。
+ANGLE_APPROACH_LEFT = 130.0
+ANGLE_APPROACH_RIGHT = 50.0
+# 实车动态验证：145 为左，30 为右。
+ANGLE_REACQUIRE_LEFT = 108.0
+ANGLE_REACQUIRE_RIGHT = 72.0
+
+
+class BucketPoint:
+    def __init__(self, x=0.0, y=0.0):
+        self.x = x
+        self.y = y
+
+
+class ServoPID:
+    def __init__(self):
+        self.lidar_angle = 0.0
+        self.P = 0.55
+        self.D = 0.1
+        self.I = 0.0
+        self.angle_integral_error = 0.0
+        self.integral_limit = 100.0
+        self.angle_last_error = 0.0
+
+    def servo_pid_control(self, new_angle_error):
+        self.angle_integral_error += new_angle_error
+        self.angle_integral_error = max(min(self.angle_integral_error, self.integral_limit), -self.integral_limit)
+        output = self.P * new_angle_error + self.D * (new_angle_error - self.angle_last_error) + self.I * self.angle_integral_error
+        output = max(min(output, 45.0), -45.0)
+        self.angle_last_error = new_angle_error
+        return float(output)
+
+
+class LidarCoordinateControlNode(Node):
+    def __init__(self):
+        super().__init__('lidar_coordinate_control_node')
+        self.servo = ServoPID()
+        
+        self.cmd_vel = Twist()
+        #self.publisher_twist = self.create_publisher(Twist, 'car_cmd_vel', 10)
+        self.publisher_twist = self.create_publisher(Twist, 'teleop_cmd_vel', 10)
+        self.subscription_scan = self.create_subscription(
+            LaserScan,
+            '/scan',
+            self.lidar_callback,
+            100
+        )
+
+        # 写死的是局部转角模板，执行结束由 IMU 航向闭环判断，
+        # 不使用“固定 PWM 持续若干秒”的开环方案。
+        # 远程小车 hipnuc_imu 驱动实际发布 /IMU_data。
+        self.declare_parameter('imu_topic', '/IMU_data')
+        self.declare_parameter('special_turn_sequence_deg', DEFAULT_SPECIAL_TURN_SEQUENCE)
+        self.declare_parameter('special_turn_enabled', True)
+        self.declare_parameter('special_turn_confirm_frames', 5)
+        self.declare_parameter('corner_gap_confirm_frames', 3)
+        self.declare_parameter('special_turn_arm_frames', 40)
+        self.declare_parameter('special_turn_approach_sec', 0.25)
+        self.declare_parameter('special_turn_exit_margin_deg', 5.0)
+        self.declare_parameter('special_turn_max_sec', 8.0)
+        self.declare_parameter('special_turn_reacquire_frames', 6)
+        self.declare_parameter('special_turn_reacquire_timeout_sec', 3.0)
+        self.declare_parameter('front_block_distance', 0.55)
+        self.declare_parameter('special_turn_block_distance', 0.28)
+
+        self.special_turn_enabled = bool(self.get_parameter('special_turn_enabled').value)
+        self.special_turn_sequence = [
+            float(value) for value in self.get_parameter('special_turn_sequence_deg').value
+        ]
+        self.turn_confirm_frames = int(self.get_parameter('special_turn_confirm_frames').value)
+        self.corner_gap_confirm_frames = int(self.get_parameter('corner_gap_confirm_frames').value)
+        self.turn_arm_frames = int(self.get_parameter('special_turn_arm_frames').value)
+        self.turn_approach_sec = float(self.get_parameter('special_turn_approach_sec').value)
+        self.turn_exit_margin_deg = float(self.get_parameter('special_turn_exit_margin_deg').value)
+        self.turn_max_sec = float(self.get_parameter('special_turn_max_sec').value)
+        self.turn_reacquire_frames = int(self.get_parameter('special_turn_reacquire_frames').value)
+        self.turn_reacquire_timeout_sec = float(
+            self.get_parameter('special_turn_reacquire_timeout_sec').value
+        )
+        self.front_block_distance = float(self.get_parameter('front_block_distance').value)
+        self.special_turn_block_distance = float(
+            self.get_parameter('special_turn_block_distance').value
+        )
+
+        self.imu_yaw = None
+        self.imu_last_ns = 0
+        self.turn_state = 'RADAR_FOLLOW'
+        self.turn_index = 0
+        self.turn_target_deg = 0.0
+        self.turn_accumulated_rad = 0.0
+        self.turn_last_yaw = None
+        self.turn_state_start_ns = 0
+        self.no_bucket_streak = 0
+        self.weak_corridor_streak = 0
+        self.valid_follow_streak = 0
+        self.reacquire_streak = 0
+        self.last_command_angle = ANGLE_CENTER
+        self.imu_missing_reported = False
+
+        imu_topic = str(self.get_parameter('imu_topic').value)
+        self.subscription_imu = self.create_subscription(Imu, imu_topic, self.imu_callback, 50)
+
+        self.default_linear_speed = 0.35
+
+        # Ͱ�о��㷨�������� node2 ����һ�£�������ֲ���ԣ�
+        self.bucket_threshold = 10            # �������ٸ�����һ��Ͱ
+        self.valid_bucket_threshold = 6       # һ��Ͱ������Ҫ����Ч����
+        self.lidar_filter_min_dist = 0.3      # ���˹������
+        self.lidar_filter_max_dist = 2.5      # ��עǰ�� 2.5m ��
+        self.roi_y_min = -0.2                 # ROI ���
+        self.roi_y_max = 3.0                  # ROI ǰ��
+        self.max_left_distance = 1.5          # ROI ���
+        self.min_right_distance = 1.5         # ROI �ҽ�
+        self.steer_gain = 60.0                # �������Ŵ���
+        self.steer_threshold_slow_down = 20.0 # ��ת�Ǽ�����ֵ���ȣ�
+
+        self.get_logger().info(
+            "Lidar coordinate control node started "
+            f"(normal radar unchanged, special turns={self.special_turn_sequence})"
+        )
+
+    def now_ns(self):
+        return self.get_clock().now().nanoseconds
+
+    @staticmethod
+    def normalize_angle(angle):
+        return math.atan2(math.sin(angle), math.cos(angle))
+
+    def imu_callback(self, data):
+        q = data.orientation
+        siny_cosp = 2.0 * (q.w * q.z + q.x * q.y)
+        cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+        yaw = math.atan2(siny_cosp, cosy_cosp)
+        self.imu_yaw = yaw
+        self.imu_last_ns = self.now_ns()
+
+        if self.turn_state in ('TURN_APPROACH', 'FIXED_TURN') and self.turn_last_yaw is not None:
+            delta = self.normalize_angle(yaw - self.turn_last_yaw)
+            self.turn_accumulated_rad += delta
+        self.turn_last_yaw = yaw
+
+    def imu_is_fresh(self):
+        return self.imu_yaw is not None and self.now_ns() - self.imu_last_ns < 500_000_000
+
+    def stop_car(self):
+        self.cmd_vel.linear.x = PWM_NEUTRAL
+        self.cmd_vel.angular.z = ANGLE_CENTER
+        self.last_command_angle = ANGLE_CENTER
+
+    def begin_special_turn(self):
+        if self.turn_index >= len(self.special_turn_sequence):
+            return False
+        if not self.imu_is_fresh():
+            self.stop_car()
+            if not self.imu_missing_reported:
+                self.get_logger().error(
+                    "Special turn requested but IMU is unavailable/stale; keep stopped for safety."
+                )
+                self.imu_missing_reported = True
+            return False
+
+        self.turn_target_deg = self.special_turn_sequence[self.turn_index]
+        self.turn_state_start_ns = self.now_ns()
+        self.turn_accumulated_rad = 0.0
+        self.turn_last_yaw = self.imu_yaw
+        self.reacquire_streak = 0
+        direction = 1.0 if self.turn_target_deg >= 0.0 else -1.0
+        self.turn_state = 'TURN_APPROACH'
+        self.cmd_vel.linear.x = PWM_SPEED
+        self.cmd_vel.angular.z = (
+            ANGLE_APPROACH_LEFT if direction > 0.0 else ANGLE_APPROACH_RIGHT
+        )
+        self.last_command_angle = self.cmd_vel.angular.z
+        self.get_logger().warn(
+            f"Special turn {self.turn_index + 1}/{len(self.special_turn_sequence)} armed: "
+            f"target={self.turn_target_deg:.1f} deg, rolling approach"
+        )
+        return True
+
+    def maybe_trigger_special_turn(self, no_path, weak_corridor, front_blocked):
+        if not self.special_turn_enabled or self.turn_index >= len(self.special_turn_sequence):
+            return False
+        if front_blocked:
+            self.no_bucket_streak = 0
+            self.weak_corridor_streak = 0
+            return False
+        if self.valid_follow_streak < self.turn_arm_frames:
+            return False
+
+        self.no_bucket_streak = self.no_bucket_streak + 1 if no_path else 0
+        self.weak_corridor_streak = self.weak_corridor_streak + 1 if weak_corridor else 0
+        next_turn = self.special_turn_sequence[self.turn_index]
+
+        # 特殊弯不能等到连续多帧完全丢路后再停车触发。路线阶段已限制
+        # 下一事件类型，因此首次 NO_PATH 就进入滚动切弯。
+        corridor_end = self.no_bucket_streak >= 1
+        # 直角弯边界缺口通常在完全丢失前就会使单侧点数不足。只有下一事件
+        # 本身是直角弯、且车辆已经向对应方向转动时才允许提前触发。
+        expected_corner = abs(next_turn) <= 110.0
+        expected_hairpin = not expected_corner
+        turning_toward_corner = (
+            (next_turn > 0.0 and self.last_command_angle >= ANGLE_CENTER + 8.0)
+            or (next_turn < 0.0 and self.last_command_angle <= ANGLE_CENTER - 8.0)
+        )
+        corner_gap = (
+            expected_corner
+            and turning_toward_corner
+            and self.weak_corridor_streak >= self.corner_gap_confirm_frames
+        )
+        hairpin_entry = (
+            expected_hairpin
+            and turning_toward_corner
+            and self.weak_corridor_streak >= 2
+        )
+        return self.begin_special_turn() if corridor_end or corner_gap or hairpin_entry else False
+
+    def run_special_turn(self, red_count, blue_count, front_blocked):
+        now = self.now_ns()
+        if self.turn_state == 'TURN_APPROACH':
+            if not self.imu_is_fresh() or front_blocked:
+                self.stop_car()
+                return True
+            direction = 1.0 if self.turn_target_deg >= 0.0 else -1.0
+            self.cmd_vel.linear.x = PWM_SPEED
+            self.cmd_vel.angular.z = (
+                ANGLE_APPROACH_LEFT if direction > 0.0 else ANGLE_APPROACH_RIGHT
+            )
+            self.last_command_angle = self.cmd_vel.angular.z
+            elapsed = (now - self.turn_state_start_ns) / 1e9
+            if elapsed >= self.turn_approach_sec:
+                self.turn_state = 'FIXED_TURN'
+                self.turn_state_start_ns = now
+            return True
+
+        if self.turn_state == 'FIXED_TURN':
+            elapsed = (now - self.turn_state_start_ns) / 1e9
+            # 170°允许约 turn_max_sec，较小转角按比例缩短，但至少3秒。
+            max_turn_duration = max(
+                3.0,
+                self.turn_max_sec * abs(self.turn_target_deg) / 170.0,
+            )
+            if elapsed >= max_turn_duration:
+                self.turn_state = 'FAULT_STOP'
+                self.stop_car()
+                self.get_logger().error(
+                    f"Special turn timeout after {elapsed:.1f}s; latched stop."
+                )
+                return True
+
+            if not self.imu_is_fresh() or front_blocked:
+                self.stop_car()
+                return True
+
+            direction = 1.0 if self.turn_target_deg >= 0.0 else -1.0
+            # IMU安装朝向可能使左转yaw为负。实际转向由舵机命令保证，
+            # 退出判断只使用累计旋转量，避免符号相反导致无限打转。
+            progress_deg = abs(math.degrees(self.turn_accumulated_rad))
+            finish_deg = max(1.0, abs(self.turn_target_deg) - self.turn_exit_margin_deg)
+            if progress_deg >= finish_deg:
+                self.turn_state = 'RADAR_REACQUIRE'
+                self.turn_state_start_ns = now
+                self.reacquire_streak = 0
+                self.get_logger().info(
+                    f"Special turn yaw complete: {progress_deg:.1f}/{abs(self.turn_target_deg):.1f} deg"
+                )
+            else:
+                self.cmd_vel.linear.x = PWM_SPECIAL_TURN
+                # 正目标角表示左转；实车动态验证 145 为左、30 为右。
+                self.cmd_vel.angular.z = ANGLE_MAX if direction > 0.0 else ANGLE_MIN
+                self.last_command_angle = self.cmd_vel.angular.z
+            return True
+
+        if self.turn_state == 'RADAR_REACQUIRE':
+            if front_blocked:
+                self.stop_car()
+                return True
+
+            corridor_valid = red_count >= 2 and blue_count >= 2
+            self.reacquire_streak = self.reacquire_streak + 1 if corridor_valid else 0
+            if self.reacquire_streak >= self.turn_reacquire_frames:
+                self.turn_index += 1
+                self.turn_state = 'RADAR_FOLLOW'
+                self.valid_follow_streak = 0
+                self.no_bucket_streak = 0
+                self.weak_corridor_streak = 0
+                self.servo.angle_integral_error = 0.0
+                self.servo.angle_last_error = 0.0
+                self.get_logger().info("Radar corridor reacquired; return to normal follow.")
+                return False
+
+            elapsed = (now - self.turn_state_start_ns) / 1e9
+            if elapsed >= self.turn_reacquire_timeout_sec:
+                self.turn_state = 'FAULT_STOP'
+                self.stop_car()
+                self.get_logger().error("Radar reacquire timeout after special turn; latched stop.")
+                return True
+
+            direction = 1.0 if self.turn_target_deg >= 0.0 else -1.0
+            self.cmd_vel.linear.x = PWM_SPECIAL_TURN
+            self.cmd_vel.angular.z = (
+                ANGLE_REACQUIRE_LEFT if direction > 0.0 else ANGLE_REACQUIRE_RIGHT
+            )
+            self.last_command_angle = self.cmd_vel.angular.z
+            return True
+
+        if self.turn_state == 'FAULT_STOP':
+            self.stop_car()
+            return True
+        return False
+    
+    def lidar_callback(self, data):
+        self.lidar_deal(data)
+        self.publisher_twist.publish(self.cmd_vel)
+
+    def lidar_deal(self, data):
+        ranges = data.ranges
+        scan_resolution = len(ranges)
+        angle_increment = data.angle_increment
+        angle_min = data.angle_min
+
+        if scan_resolution == 0 or all(math.isnan(r) or math.isinf(r) for r in ranges):
+            self.get_logger().warn("Radar ranges is empty or invalid! Force stop temporarily.")
+            self.stop_car()
+            return
+
+        red_points = []
+        blue_points = []
+        front_clearance = float('inf')
+
+        for i in range(1, scan_resolution - self.bucket_threshold):
+            current = ranges[i]
+
+            if math.isnan(current) or math.isinf(current):
+                continue
+            if current <= 0.0 or current > self.lidar_filter_max_dist:
+                continue
+
+            # 安全距离直接使用原始有效点，不能要求该点先通过锥桶形状检测。
+            theta = angle_min + i * angle_increment
+            raw_x = current * math.sin(theta)
+            raw_y = current * math.cos(theta)
+            if abs(raw_x) < 0.35 and 0.0 < raw_y < front_clearance:
+                front_clearance = raw_y
+
+            if current < self.lidar_filter_min_dist:
+                continue
+
+            if ranges[i-1] - current < 2.0:
+                continue
+            if ranges[i-1] - ranges[i+1] < 2.0:
+                continue
+
+            continue_ranges = 0
+            for idx in range(1, self.bucket_threshold):
+                if i + idx < scan_resolution:
+                    if abs(current - ranges[i + idx]) < 0.2:
+                        continue_ranges += 1
+                        if continue_ranges >= self.valid_bucket_threshold:
+                            break
+
+            if continue_ranges < self.valid_bucket_threshold:
+                continue
+
+            x = current * math.sin(theta)
+            y = current * math.cos(theta)
+
+            if (x <= self.max_left_distance and x >= -self.min_right_distance and
+                self.roi_y_min < y < self.roi_y_max):
+                pt = BucketPoint(x, y)
+                if x > 0.0:
+                    red_points.append(pt)
+                else:
+                    blue_points.append(pt)
+
+        red_points, blue_points = self.adjust_bucket_counts(red_points, len(red_points), blue_points, len(blue_points))
+
+        red_count = len(red_points)
+        blue_count = len(blue_points)
+        error_count = min(red_count, blue_count)
+        front_blocked = front_clearance < self.front_block_distance
+        special_turn_blocked = front_clearance < self.special_turn_block_distance
+        no_path = error_count == 0
+        weak_corridor = error_count <= 1
+
+        if self.turn_state != 'RADAR_FOLLOW':
+            self.run_special_turn(red_count, blue_count, special_turn_blocked)
+            return
+
+        if error_count >= 2:
+            self.valid_follow_streak += 1
+
+        if self.maybe_trigger_special_turn(no_path, weak_corridor, front_blocked):
+            return
+
+        angle_output = ANGLE_CENTER
+        speed_output = PWM_SPEED
+
+        if error_count > 0:
+            weighted_error = 0.0
+            weight_sum = 0.0
+
+            for idx in range(error_count):
+                b_pt = blue_points[idx]
+                r_pt = red_points[error_count - 1 - idx]
+
+                weight = (b_pt.y + r_pt.y) / 2.0
+                weighted_error += (b_pt.x + r_pt.x) * weight
+                weight_sum += weight
+
+            error = (weighted_error / weight_sum) * self.steer_gain if weight_sum > 0.0 else 0.0
+            angle_pid = self.servo.servo_pid_control(error)
+            final_angle = ANGLE_CENTER + angle_pid
+
+            if abs(angle_pid) >= self.steer_threshold_slow_down:
+                speed_output = PWM_SLOW
+
+            # ★ 驱动 legacy PWM：直接发布 0~180 度舵角
+            final_angle = min(max(final_angle, ANGLE_MIN), ANGLE_MAX)
+            angle_output = final_angle
+        else:
+            self.stop_car()
+            reason = "FRONT_BLOCKED" if front_blocked else "NO_PATH"
+            self.get_logger().info(f"NO BUCKET: {reason}")
+            return
+
+        self.cmd_vel.linear.x = speed_output
+        self.cmd_vel.angular.z = angle_output
+        self.last_command_angle = angle_output
+        self.get_logger().info(
+            f"Bucket: Linear {self.cmd_vel.linear.x:.2f}, Angular_z {self.cmd_vel.angular.z:.2f}"
+        )
+
+    def adjust_bucket_counts(self, red_points, red_count, blue_points, blue_count):
+        if blue_count >= red_count:
+            split_index = 100
+            for i in range(1, blue_count):
+                distance_squared = (blue_points[i-1].x - blue_points[i].x) ** 2 + (
+                    blue_points[i-1].y - blue_points[i].y
+                ) ** 2
+                if distance_squared > 1.4 * 1.4:
+                    split_index = i
+                    break
+
+            if split_index != 100:
+                points_to_move = blue_points[split_index:]
+                blue_points = blue_points[:split_index]
+                red_points = points_to_move + red_points
+
+                red_count = len(red_points)
+                blue_count = len(blue_points)
+        else:
+            split_index = 100
+            for i in range(red_count - 2, -1, -1):
+                distance_squared = (red_points[i].x - red_points[i+1].x) ** 2 + (
+                    red_points[i].y - red_points[i+1].y
+                ) ** 2
+                if distance_squared > 1.4 * 1.4:
+                    split_index = i
+                    break
+
+            if split_index != 100:
+                points_to_move = red_points[: split_index + 1]
+                red_points = red_points[split_index + 1 :]
+                blue_points = blue_points + points_to_move
+
+                red_count = len(red_points)
+                blue_count = len(blue_points)
+
+        red_points = red_points[:3]
+        blue_points = blue_points[:3]
+        red_count = len(red_points)
+        blue_count = len(blue_points)
+
+        if red_count > blue_count and blue_count > 0:
+            if blue_count == 1:
+                if red_count > 2:
+                    red_points = red_points[1:3]
+                    red_count = 2
+                blue_points.append(blue_points[0])
+                blue_count = 2
+            elif blue_count == 2:
+                blue_points.append(blue_points[1])
+                blue_count = 3
+        elif blue_count > red_count and red_count > 0:
+            if red_count == 1:
+                blue_count = 2
+                red_points.append(red_points[0])
+                red_count = 2
+            elif red_count == 2:
+                red_points = [red_points[0]] + red_points
+                red_count = 3
+
+        return red_points, blue_points
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = LidarCoordinateControlNode()
+    
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        stop_cmd = Twist()
+        stop_cmd.linear.x = PWM_NEUTRAL
+        stop_cmd.angular.z = ANGLE_CENTER
+        node.publisher_twist.publish(stop_cmd)
+        node.get_logger().info("Node stopped by user (KeyboardInterrupt) - Robot forced stop.")
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
